@@ -1,0 +1,158 @@
+{
+  "id": "geo-public-inverse-20261030",
+  "sceneId": "s4",
+  "title": "储层参数反演 · 公开数据可视分析",
+  "version": "1.0.0",
+  "updated": "2026-10-30",
+  "status": "ready",
+  "methods": [
+    "cv",
+    "opt"
+  ],
+  "tabs": {
+    "background": {
+      "label": "专业背景",
+      "lede": "用公开 Volve 井震数据训练一个非线性回归器，再将预测与另一口井的孔隙度解释曲线对照。",
+      "judge": [
+        {
+          "label": "方法",
+          "value": "多层感知机 MLP · 回归",
+          "desc": "正角度地震道集按三个角度带、五个相邻深度位置汇总为 15 个特征，经 20→10 隐藏单元预测孔隙度。输入中没有孔隙度、密度或标签推导的特征。"
+        },
+        {
+          "label": "数据",
+          "value": "Equinor Volve / Seis2Rock 公开预处理数据",
+          "desc": "CC BY 4.0"
+        },
+        {
+          "label": "价值",
+          "value": "可视复核",
+          "desc": "深度曲线共享坐标，散点图用 1:1 线显示偏差；误差条带突出局部失败，选中深度后关联角度响应，让多变量输入到输出的路径可见。"
+        },
+        {
+          "label": "难度",
+          "value": "中",
+          "desc": "中至高：样本少、井震尺度不一致，振幅与孔隙度之间并非唯一对应。"
+        }
+      ],
+      "sections": [
+        {
+          "no": 1,
+          "en": "CONTEXT",
+          "title": "专业场景与可视化概念",
+          "html": "<div style=\"font:14px/1.9 'Microsoft YaHei',sans-serif;color:#29434a\"><p><b>孔隙度 φ</b>：孔隙体积 / 岩石总体积。它回答“能装多少”，不直接回答“能流多快”，后者还与孔隙连通性和渗透率有关。</p><p>孔隙度描述岩石中的孔隙比例，影响流体储存能力。地震记录的是波的反射响应，不是孔隙度；从响应推断参数存在多解性。</p><svg viewBox=\"0 0 720 100\" role=\"img\" aria-label=\"数据处理流程\"><rect x=\"3\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"82\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">孔隙度 φ</text><text x=\"165\" y=\"53\" fill=\"#688279\">→</text><rect x=\"183\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"262\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">地震响应</text><text x=\"345\" y=\"53\" fill=\"#688279\">→</text><rect x=\"363\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"442\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">可视化表示</text><text x=\"525\" y=\"53\" fill=\"#688279\">→</text><rect x=\"543\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"622\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">人工复核</text></svg></div>"
+        },
+        {
+          "no": 2,
+          "en": "AI",
+          "title": "AI 的介入点",
+          "html": "<div style=\"font:14px/1.9 'Microsoft YaHei',sans-serif;color:#29434a\"><p>正角度地震道集按三个角度带、五个相邻深度位置汇总为 15 个特征，经 20→10 隐藏单元预测孔隙度。输入中没有孔隙度、密度或标签推导的特征。</p><svg viewBox=\"0 0 720 100\" role=\"img\" aria-label=\"数据处理流程\"><rect x=\"3\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"82\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">地震属性</text><text x=\"165\" y=\"53\" fill=\"#688279\">→</text><rect x=\"183\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"262\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">神经网络</text><text x=\"345\" y=\"53\" fill=\"#688279\">→</text><rect x=\"363\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"442\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">预测结果</text><text x=\"525\" y=\"53\" fill=\"#688279\">→</text><rect x=\"543\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"622\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">误差复核</text></svg><p>φ̂ = 0.45 · sigmoid(W₃ ReLU(W₂ ReLU(W₁x + b₁)+b₂)+b₃)</p></div>"
+        },
+        {
+          "no": 3,
+          "en": "DATA",
+          "title": "数据、规模和标注条件",
+          "html": "<div style=\"font:14px/1.9 'Microsoft YaHei',sans-serif;color:#29434a\"><ul><li>业务规模建议：多井孔隙度解释、角度道集、可靠井震标定；需多个工区验证。</li><li>本例：BT2 井 223 个有效深度点，A 井 127 点。去掉超出原始测井深度范围的外推标签。</li><li>BT2 ≤2900 m 训练、≥2960 m 验证，中间隔离；A 井仅测试。两者同属 Volve 相关井系，不能等同于跨工区检验。</li></ul><svg viewBox=\"0 0 720 100\" role=\"img\" aria-label=\"数据处理流程\"><rect x=\"3\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"82\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">训练区域</text><text x=\"165\" y=\"53\" fill=\"#688279\">→</text><rect x=\"183\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"262\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">验证选轮次</text><text x=\"345\" y=\"53\" fill=\"#688279\">→</text><rect x=\"363\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"442\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">保留测试</text><text x=\"525\" y=\"53\" fill=\"#688279\">→</text><rect x=\"543\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"622\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">公开结果</text></svg><p>正角度部分按原 notebook 使用列 25:50；每点取 ±2 深度采样、三个角度带均值，得到 15 个地震特征。训练 BT2 ≤2900 m、验证 BT2 ≥2960 m，中间留隔离带；A 井只测试。两口井属于同一油田、相关井系，不代表跨工区泛化。原作者 Seis2Rock 非神经网络；本案例是独立 MLP 教学实验。未套用原 notebook 的 40 m 绘图位移。</p></div>"
+        },
+        {
+          "no": 4,
+          "en": "LIMITS",
+          "title": "难度、参考方向与边界",
+          "html": "<div style=\"font:14px/1.9 'Microsoft YaHei',sans-serif;color:#29434a\"><p>中至高：样本少、井震尺度不一致，振幅与孔隙度之间并非唯一对应。</p><p>深度曲线共享坐标，散点图用 1:1 线显示偏差；误差条带突出局部失败，选中深度后关联角度响应，让多变量输入到输出的路径可见。</p><p>真实公开数据上的小型教学 MLP，不是 Seis2Rock 论文算法复现；测井解释孔隙度也存在误差。默认 A 井检验中，神经网络未优于训练均值基线，页面保留失败结果以解释泛化限制。</p><p>通用参考方向：多层感知机 MLP · 回归、空间隔离检验、可视分析。</p><p><a href=\"https://zenodo.org/records/11481946\" target=\"_blank\" rel=\"noopener\">公开数据与原作者</a></p></div>"
+        }
+      ]
+    },
+    "workflow": {
+      "label": "案例流程",
+      "title": "从专业问题到可复核的预测",
+      "lead": [
+        "正角度地震道集按三个角度带、五个相邻深度位置汇总为 15 个特征，经 20→10 隐藏单元预测孔隙度。输入中没有孔隙度、密度或标签推导的特征。",
+        "真实公开数据上的小型教学 MLP，不是 Seis2Rock 论文算法复现；测井解释孔隙度也存在误差。默认 A 井检验中，神经网络未优于训练均值基线，页面保留失败结果以解释泛化限制。"
+      ],
+      "stats": [
+        [
+          "训练样本",
+          "122"
+        ],
+        [
+          "验证样本",
+          "87"
+        ],
+        [
+          "网络参数",
+          "541"
+        ]
+      ],
+      "steps": [
+        {
+          "name": "井震数据对齐",
+          "role": "可视分析",
+          "do": "用发布者已重采样的孔隙度与同长度地震道集建立配对。",
+          "effect": "深度 / 25 角度通道 / φ",
+          "trap": "不套用原 notebook 的 40 m 绘图平移；仍需专业井震标定复核。"
+        },
+        {
+          "name": "构造地震特征",
+          "role": "可视分析",
+          "do": "三个角度带 × 五个相邻深度点，形成 15 维输入。",
+          "effect": "15 维地震特征",
+          "trap": "训练均值和标准差只由训练样本计算。"
+        },
+        {
+          "name": "隔离训练与检验",
+          "role": "可视分析",
+          "do": "训练、验证来自隔离的 BT2 井段，A 井留作测试。",
+          "effect": "数据用途分布",
+          "trap": "不能根据 A 井结果反复选择最优轮次。"
+        },
+        {
+          "name": "训练非线性回归",
+          "role": "可视分析",
+          "do": "优化均方误差，用验证误差最小的轮次恢复权重。",
+          "effect": "训练 / 验证损失曲线",
+          "trap": "训练误差下降同时验证误差升高，是过拟合的信号。"
+        },
+        {
+          "name": "比较与解释失败",
+          "role": "可视分析",
+          "do": "与训练均值基线比较，检查偏差集中在哪些深度。",
+          "effect": "MAE / RMSE / 1:1 散点图",
+          "trap": "模型名字更复杂不等于结果更可信。"
+        }
+      ],
+      "metrics": {
+        "title": "输入、计算、输出与检查点",
+        "html": "<div style=\"font:14px/1.9 'Microsoft YaHei',sans-serif;color:#29434a\"><h4>01 井震数据对齐</h4><svg viewBox=\"0 0 720 100\" role=\"img\" aria-label=\"数据处理流程\"><rect x=\"3\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"82\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">公开数据</text><text x=\"165\" y=\"53\" fill=\"#688279\">→</text><rect x=\"183\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"262\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">井震数据对齐</text><text x=\"345\" y=\"53\" fill=\"#688279\">→</text><rect x=\"363\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"442\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">深度 / 25 角度</text><text x=\"525\" y=\"53\" fill=\"#688279\">→</text><rect x=\"543\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"622\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">检查与解释</text></svg><p>用发布者已重采样的孔隙度与同长度地震道集建立配对。</p><p>检查点：不套用原 notebook 的 40 m 绘图平移；仍需专业井震标定复核。</p><h4>02 构造地震特征</h4><svg viewBox=\"0 0 720 100\" role=\"img\" aria-label=\"数据处理流程\"><rect x=\"3\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"82\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">公开数据</text><text x=\"165\" y=\"53\" fill=\"#688279\">→</text><rect x=\"183\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"262\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">构造地震特征</text><text x=\"345\" y=\"53\" fill=\"#688279\">→</text><rect x=\"363\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"442\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">15 维地震特征</text><text x=\"525\" y=\"53\" fill=\"#688279\">→</text><rect x=\"543\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"622\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">检查与解释</text></svg><p>三个角度带 × 五个相邻深度点，形成 15 维输入。</p><p>检查点：训练均值和标准差只由训练样本计算。</p><h4>03 隔离训练与检验</h4><svg viewBox=\"0 0 720 100\" role=\"img\" aria-label=\"数据处理流程\"><rect x=\"3\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"82\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">公开数据</text><text x=\"165\" y=\"53\" fill=\"#688279\">→</text><rect x=\"183\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"262\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">隔离训练与检验</text><text x=\"345\" y=\"53\" fill=\"#688279\">→</text><rect x=\"363\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"442\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">数据用途分布</text><text x=\"525\" y=\"53\" fill=\"#688279\">→</text><rect x=\"543\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"622\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">检查与解释</text></svg><p>训练、验证来自隔离的 BT2 井段，A 井留作测试。</p><p>检查点：不能根据 A 井结果反复选择最优轮次。</p><h4>04 训练非线性回归</h4><svg viewBox=\"0 0 720 100\" role=\"img\" aria-label=\"数据处理流程\"><rect x=\"3\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"82\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">公开数据</text><text x=\"165\" y=\"53\" fill=\"#688279\">→</text><rect x=\"183\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"262\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">训练非线性回归</text><text x=\"345\" y=\"53\" fill=\"#688279\">→</text><rect x=\"363\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"442\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">训练 / 验证损失曲</text><text x=\"525\" y=\"53\" fill=\"#688279\">→</text><rect x=\"543\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"622\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">检查与解释</text></svg><p>优化均方误差，用验证误差最小的轮次恢复权重。</p><p>检查点：训练误差下降同时验证误差升高，是过拟合的信号。</p><h4>05 比较与解释失败</h4><svg viewBox=\"0 0 720 100\" role=\"img\" aria-label=\"数据处理流程\"><rect x=\"3\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"82\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">公开数据</text><text x=\"165\" y=\"53\" fill=\"#688279\">→</text><rect x=\"183\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"262\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">比较与解释失败</text><text x=\"345\" y=\"53\" fill=\"#688279\">→</text><rect x=\"363\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"442\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">MAE / RMSE</text><text x=\"525\" y=\"53\" fill=\"#688279\">→</text><rect x=\"543\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"622\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">检查与解释</text></svg><p>与训练均值基线比较，检查偏差集中在哪些深度。</p><p>检查点：模型名字更复杂不等于结果更可信。</p></div>"
+      },
+      "fails": [
+        {
+          "name": "井震数据对齐",
+          "why": "不套用原 notebook 的 40 m 绘图平移；仍需专业井震标定复核。"
+        },
+        {
+          "name": "构造地震特征",
+          "why": "训练均值和标准差只由训练样本计算。"
+        },
+        {
+          "name": "隔离训练与检验",
+          "why": "不能根据 A 井结果反复选择最优轮次。"
+        },
+        {
+          "name": "训练非线性回归",
+          "why": "训练误差下降同时验证误差升高，是过拟合的信号。"
+        },
+        {
+          "name": "比较与解释失败",
+          "why": "模型名字更复杂不等于结果更可信。"
+        }
+      ]
+    },
+    "demo": {
+      "label": "案例演示",
+      "mode": "page",
+      "html": "demo/experiment.html",
+      "intro": "用公开 Volve 井震数据训练一个非线性回归器，再将预测与另一口井的孔隙度解释曲线对照。",
+      "height": 1350
+    }
+  }
+}

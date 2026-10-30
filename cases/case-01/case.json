@@ -1,0 +1,164 @@
+{
+  "id": "workover-neural-lab",
+  "sceneId": "wo1",
+  "title": "修井作业方案智能推荐：知识约束与多任务神经网络",
+  "status": "ready",
+  "version": "3.0.0",
+  "updated": "2026-10-28",
+  "methods": [
+    "kg"
+  ],
+  "tabs": {
+    "background": {
+      "label": "专业背景",
+      "lede": "用多任务神经网络学习井况与路径结果的关系，以知识约束、历史近邻和可视化验证辅助方案比较。纯前端、真实训练、教学模拟数据。",
+      "judge": [
+        {
+          "label": "任务",
+          "value": "分类＋回归",
+          "desc": "目标完成可能性与作业工时"
+        },
+        {
+          "label": "数据",
+          "value": "3000 条模拟记录",
+          "desc": "1500 口井，按井分组避免泄漏"
+        },
+        {
+          "label": "方法",
+          "value": "MLP＋知识约束",
+          "desc": "12→24→12共享网络，两个输出头"
+        },
+        {
+          "label": "难度",
+          "value": "高",
+          "desc": "分布差异、结果定义与概率校准"
+        }
+      ],
+      "sections": [
+        {
+          "no": 1,
+          "en": "CONTEXT",
+          "title": "专业背景：从井筒问题到候选处理路径",
+          "html": "<style>.neural-doc{font-size:14px;line-height:1.9;color:#294439}.neural-doc p{margin:12px 0}.neural-doc svg{width:100%;height:auto;display:block;max-width:760px;margin:18px auto;background:#f5f8f1;border-radius:12px;padding:12px}.neural-doc a{color:#256753}</style><div class=\"neural-doc\"><p>生产井的流动通道可能因砂粒堆积或结垢受阻，套管损伤则涉及井筒完整性。传统方案编制需要查阅井史、工具条件和历史总结，难点在于把分散信息变成可复核的比较依据。</p><div class=\"figure-scroll\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 300\" role=\"img\" aria-label=\"井筒结构与砂粒堆积阻塞流动通道\"><title>井筒结构与砂粒堆积阻塞流动通道</title><rect x=\"30\" y=\"48\" width=\"270\" height=\"220\" rx=\"14\" fill=\"#e9eddf\"/><path d=\"M30 95H150M250 95H300M30 145H150M250 145H300M30 195H150M250 195H300M30 245H150M250 245H300\" stroke=\"#d4dccb\"/><path d=\"M160 40V255M244 40V255\" stroke=\"#92a89a\" stroke-width=\"8\"/><path d=\"M182 35V258M222 35V258\" stroke=\"#326c58\" stroke-width=\"5\"/><rect x=\"173\" y=\"18\" width=\"58\" height=\"24\" rx=\"5\" fill=\"#326c58\"/><path d=\"M174 207Q202 186 230 210L227 251H177Z\" fill=\"#c8a67d\"/><g fill=\"#f8e7c9\"><circle cx=\"184\" cy=\"225\" r=\"4\"/><circle cx=\"212\" cy=\"213\" r=\"4\"/><circle cx=\"201\" cy=\"241\" r=\"5\"/><circle cx=\"222\" cy=\"236\" r=\"3\"/></g><path d=\"M247 73H350M223 123H350M231 219H350\" fill=\"none\" stroke=\"#a8bbad\"/><text x=\"363\" y=\"76\" fill=\"#49645b\" font-size=\"13\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">套管 · 支撑与隔离</text><text x=\"363\" y=\"126\" fill=\"#49645b\" font-size=\"13\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">油管 · 输送通道</text><text x=\"363\" y=\"215\" fill=\"#49645b\" font-size=\"12\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">砂粒堆积阻塞流动通道</text><text x=\"363\" y=\"240\" fill=\"#49645b\" font-size=\"11\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">图形是概念剖面，不按比例绘制</text><text x=\"35\" y=\"288\" fill=\"#49645b\" font-size=\"11\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">专业概念 → 可观察的故障 → 可比较的处理路径</text></svg></div><p>本例保留三类故障、六条路径。清砂、管柱检修、化学清垢、机械清垢、局部修复评估属于处理与评估；补充检测独立成组。图形和条件均为教学简化，不计算施工载荷、药剂配方或承压验收。</p></div>"
+        },
+        {
+          "no": 2,
+          "en": "AI INTERVENTION",
+          "title": "AI 介入点：学习井况与方案结果之间的关系",
+          "html": "<style>.neural-doc{font-size:14px;line-height:1.9;color:#294439}.neural-doc p{margin:12px 0}.neural-doc svg{width:100%;height:auto;display:block;max-width:760px;margin:18px auto;background:#f5f8f1;border-radius:12px;padding:12px}.neural-doc a{color:#256753}</style><div class=\"neural-doc\"><p>多任务 MLP 对结构化井况和候选方案同时预测“本路径目标完成可能性”和“作业工时”。共享隐藏层学习表示，两个输出头分别学习分类和回归。知识规则在预测前排除条件不满足的路径。</p><div class=\"figure-scroll\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 300\" role=\"img\" aria-label=\"多任务神经网络：12维输入、共享隐藏层和两个输出\"><title>多任务神经网络：12维输入、共享隐藏层和两个输出</title><path d=\"M127 129H223M337 129H420M420 129V73H482M420 129V196H482\" stroke=\"#9ab3a2\" stroke-width=\"2\" fill=\"none\"/><rect x=\"15\" y=\"86\" width=\"118\" height=\"86\" rx=\"12\" fill=\"#edf3e9\"/><text x=\"30\" y=\"115\" fill=\"#49645b\" font-size=\"13\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">井况＋候选路径</text><text x=\"30\" y=\"142\" fill=\"#49645b\" font-size=\"11\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">12 维编码</text><rect x=\"223\" y=\"78\" width=\"128\" height=\"103\" rx=\"12\" fill=\"#dbe9db\"/><text x=\"246\" y=\"110\" fill=\"#49645b\" font-size=\"13\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">共享隐藏层</text><text x=\"247\" y=\"137\" fill=\"#49645b\" font-size=\"19\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">24 → 12</text><text x=\"246\" y=\"159\" fill=\"#49645b\" font-size=\"11\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">ReLU 非线性</text><rect x=\"482\" y=\"39\" width=\"143\" height=\"66\" rx=\"10\" fill=\"#e4eee4\"/><text x=\"496\" y=\"67\" fill=\"#49645b\" font-size=\"13\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">目标完成可能性</text><text x=\"496\" y=\"89\" fill=\"#49645b\" font-size=\"11\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">Sigmoid · 分类头</text><rect x=\"482\" y=\"163\" width=\"143\" height=\"66\" rx=\"10\" fill=\"#e7eef2\"/><text x=\"496\" y=\"191\" fill=\"#49645b\" font-size=\"13\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">预计作业工时</text><text x=\"496\" y=\"213\" fill=\"#49645b\" font-size=\"11\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">对数工时 · 回归头</text><text x=\"25\" y=\"268\" fill=\"#49645b\" font-size=\"12\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">同一组井况表示，同时服务两个学习目标；权重由训练数据更新。</text></svg></div><p>这是真实的前端反向传播训练，不是把人工分数改名为神经网络。网络未使用大语言模型、图神经网络或真实井下图像。历史案例参考保留为可核对的证据。</p></div>"
+        },
+        {
+          "no": 3,
+          "en": "DATA",
+          "title": "数据条件：1500 口模拟井，3000 条路径记录",
+          "html": "<style>.neural-doc{font-size:14px;line-height:1.9;color:#294439}.neural-doc p{margin:12px 0}.neural-doc svg{width:100%;height:auto;display:block;max-width:760px;margin:18px auto;background:#f5f8f1;border-radius:12px;padding:12px}.neural-doc a{color:#256753}</style><div class=\"neural-doc\"><div class=\"figure-scroll\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 300\" role=\"img\" aria-label=\"按井分组划分，避免同井记录泄漏\"><title>按井分组划分，避免同井记录泄漏</title><rect x=\"28\" y=\"80\" width=\"350\" height=\"55\" rx=\"8\" fill=\"#dcebdc\"/><rect x=\"378\" y=\"80\" width=\"115\" height=\"55\" fill=\"#e4edf1\"/><rect x=\"493\" y=\"80\" width=\"115\" height=\"55\" rx=\"8\" fill=\"#f1e7d6\"/><text x=\"45\" y=\"112\" fill=\"#49645b\" font-size=\"13\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">训练 · 900 井 / 1800 条</text><text x=\"389\" y=\"112\" fill=\"#49645b\" font-size=\"11\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">验证 300井</text><text x=\"502\" y=\"112\" fill=\"#49645b\" font-size=\"11\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">测试 300井</text><text x=\"28\" y=\"53\" fill=\"#49645b\" font-size=\"16\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">先划分井，再展开每口井的两条候选路径</text><path d=\"M108 153V200H270M177 153V177H270\" stroke=\"#8ba08f\" fill=\"none\"/><text x=\"285\" y=\"185\" fill=\"#49645b\" font-size=\"16\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">同井记录不跨集合</text><text x=\"28\" y=\"254\" fill=\"#49645b\" font-size=\"12\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">训练更新权重；验证选择最优轮次；测试仅用于报告泛化误差。</text></svg></div><p>字段包括井编号、故障、井深、井斜、程度、候选路径、是否完成目标和工时。训练 1800 条、验证 600 条、测试 600 条；同井的两个方案共享部分耗时扰动。标签按公开的教学生成函数和固定随机种子生成，未沿用旧版 72 条记录的固定完成比例。</p><p>真实应用需要统一验收标准、失败记录、完整井况和设备/诊断证据，样本规模应由学习曲线和跨井验证确定；3000 条仅是本演示规模。</p></div>"
+        },
+        {
+          "no": 4,
+          "en": "VISUAL ANALYTICS",
+          "title": "技术难度与可视化：让预测接受检查",
+          "html": "<style>.neural-doc{font-size:14px;line-height:1.9;color:#294439}.neural-doc p{margin:12px 0}.neural-doc svg{width:100%;height:auto;display:block;max-width:760px;margin:18px auto;background:#f5f8f1;border-radius:12px;padding:12px}.neural-doc a{color:#256753}</style><div class=\"neural-doc\"><div class=\"figure-scroll\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 300\" role=\"img\" aria-label=\"知识约束先于神经网络方案比较\"><title>知识约束先于神经网络方案比较</title><rect x=\"20\" y=\"45\" width=\"165\" height=\"70\" rx=\"10\" fill=\"#edf3e9\"/><text x=\"34\" y=\"75\" fill=\"#49645b\" font-size=\"13\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">故障、设备与确认状态</text><text x=\"34\" y=\"97\" fill=\"#49645b\" font-size=\"11\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">不可由模型概率代替</text><path d=\"M187 80H254M330 80H423M330 80V210H423\" fill=\"none\" stroke=\"#9ab3a2\" stroke-width=\"2\"/><path d=\"M292 39l42 41-42 41-42-41Z\" fill=\"#dcebdc\"/><text x=\"266\" y=\"85\" fill=\"#49645b\" font-size=\"12\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">约束检查</text><rect x=\"425\" y=\"44\" width=\"185\" height=\"72\" rx=\"10\" fill=\"#e4eee4\"/><text x=\"440\" y=\"74\" fill=\"#49645b\" font-size=\"13\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">已满足 → 神经网络比较</text><text x=\"440\" y=\"96\" fill=\"#49645b\" font-size=\"11\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">同目标组内权衡工时与结果</text><rect x=\"425\" y=\"174\" width=\"185\" height=\"72\" rx=\"10\" fill=\"#f4e9db\"/><text x=\"440\" y=\"204\" fill=\"#49645b\" font-size=\"13\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">未满足 → 保留排除理由</text><text x=\"440\" y=\"226\" fill=\"#49645b\" font-size=\"11\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">不展示该路径的推荐预测</text><text x=\"20\" y=\"274\" fill=\"#49645b\" font-size=\"12\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">检测目标与处理目标分组，防止“检测更快”被误读为“修复更优”。</text></svg></div><p>技术难度：高。难点包括模拟到现场的分布差异、结果定义不一致、少量特征无法表达全部工程条件，以及概率校准。参考方向：多任务学习、案例推理、知识约束、可解释预测。</p><p>可视化采用位置比较概率/工时、折线呈现训练变化、散点检验误差、分箱校准图检查概率、相同尺度下的敏感性曲线和近邻数据表。颜色只区分模型或状态，不代替文字和数值。</p><p>参考：<a href=\"https://www.tensorflow.org/js/guide/train_models\" target=\"_blank\" rel=\"noopener\">TensorFlow.js 训练文档</a>；<a href=\"https://glossary.slb.com/en/terms/c/cleanout\" target=\"_blank\" rel=\"noopener\">SLB · Cleanout</a>；<a href=\"https://glossary.slb.com/en/terms/s/scale\" target=\"_blank\" rel=\"noopener\">SLB · Scale</a>。专业资料支持概念，不提供本演示的训练记录或效果数值。</p></div>"
+        }
+      ]
+    },
+    "workflow": {
+      "label": "案例流程",
+      "title": "从井况到模型，再从模型回到证据",
+      "lead": [
+        "点击案例演示可操作真实神经网络。流程覆盖任务定义、数据划分、训练、验证、约束与解释。",
+        "所有生成系数为教学设定；预测提供比较依据，不替代工程判断。"
+      ],
+      "stats": [
+        [
+          "模拟井",
+          "1500"
+        ],
+        [
+          "训练 / 验证 / 测试记录",
+          "1800 / 600 / 600"
+        ],
+        [
+          "候选路径",
+          "6"
+        ],
+        [
+          "预测任务",
+          "2"
+        ]
+      ],
+      "steps": [
+        {
+          "name": "定义任务",
+          "role": "专业问题",
+          "do": "从故障出发定义处理路径，分别记录本路径目标是否完成和耗时。补充检测单独成组。",
+          "effect": "把修井选择转为分类＋回归两个任务。",
+          "trap": "完成诊断不等于完成修复；概率必须对应明确目标。"
+        },
+        {
+          "name": "组织数据",
+          "role": "数据",
+          "do": "生成 1500 口模拟井、3000 条路径记录。先按井分成 900 / 300 / 300 井，再展开候选记录。数值标准化只使用训练集均值和标准差。",
+          "effect": "避免同井不同方案泄漏到验证或测试集合。",
+          "trap": "这不是现场数据；每口井的两种结果是模拟反事实，不构成实际因果证据。"
+        },
+        {
+          "name": "训练网络",
+          "role": "学习",
+          "do": "输入 3 个故障编码、6 个路径编码及 3 个标准化井况特征。共享两层 ReLU；一个头预测完成可能性，另一个头预测标准化对数工时。",
+          "effect": "通过反向传播和 Adam 更新真实权重。",
+          "trap": "设备与确认状态进入硬约束，不作为网络学习的替代安全规则。"
+        },
+        {
+          "name": "检验结果",
+          "role": "验证",
+          "do": "绘制训练/验证损失，保留验证损失最低的轮次。测试集上比较神经网络、同数据案例推理和路径均值基线；展示 Brier、MAE 与校准图。",
+          "effect": "用误差和对照判断网络是否有帮助。",
+          "trap": "不承诺神经网络总是优胜。反复查看测试后调参属于课堂探索，不能宣称严格盲评。"
+        },
+        {
+          "name": "约束与比较",
+          "role": "人机决策",
+          "do": "先检查故障、设备、相容性及诊断，再在相同目标组内比较预测。时间偏好只影响人工效用，不改变神经网络输出。",
+          "effect": "高预测值不能覆盖缺失前提，允许没有可用方案。",
+          "trap": "效用分数不是完成概率，更不是施工许可。"
+        },
+        {
+          "name": "解释与记录",
+          "role": "可视分析",
+          "do": "查看单变量敏感性、参考值替换后的变化、隐藏层激活与训练近邻；导出井况、约束、预测、模型参数和数据版本。",
+          "effect": "让预测可以追溯、比较和复算。",
+          "trap": "激活值和敏感性不是工程因果解释；范围外的结果必须结合证据不足提示阅读。"
+        }
+      ],
+      "metrics": {
+        "title": "每一步都留下可检查的图形证据",
+        "html": "<style>.neural-doc{font-size:14px;line-height:1.9;color:#294439}.neural-doc p{margin:12px 0}.neural-doc svg{width:100%;height:auto;display:block;max-width:760px;margin:18px auto;background:#f5f8f1;border-radius:12px;padding:12px}.neural-doc a{color:#256753}</style><div class=\"neural-doc\"><h4>01 定义任务</h4><p>从故障出发定义处理路径，分别记录本路径目标是否完成和耗时。补充检测单独成组。</p><div class=\"figure-scroll\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 300\" role=\"img\" aria-label=\"井筒结构与砂粒堆积阻塞流动通道\"><title>井筒结构与砂粒堆积阻塞流动通道</title><rect x=\"30\" y=\"48\" width=\"270\" height=\"220\" rx=\"14\" fill=\"#e9eddf\"/><path d=\"M30 95H150M250 95H300M30 145H150M250 145H300M30 195H150M250 195H300M30 245H150M250 245H300\" stroke=\"#d4dccb\"/><path d=\"M160 40V255M244 40V255\" stroke=\"#92a89a\" stroke-width=\"8\"/><path d=\"M182 35V258M222 35V258\" stroke=\"#326c58\" stroke-width=\"5\"/><rect x=\"173\" y=\"18\" width=\"58\" height=\"24\" rx=\"5\" fill=\"#326c58\"/><path d=\"M174 207Q202 186 230 210L227 251H177Z\" fill=\"#c8a67d\"/><g fill=\"#f8e7c9\"><circle cx=\"184\" cy=\"225\" r=\"4\"/><circle cx=\"212\" cy=\"213\" r=\"4\"/><circle cx=\"201\" cy=\"241\" r=\"5\"/><circle cx=\"222\" cy=\"236\" r=\"3\"/></g><path d=\"M247 73H350M223 123H350M231 219H350\" fill=\"none\" stroke=\"#a8bbad\"/><text x=\"363\" y=\"76\" fill=\"#49645b\" font-size=\"13\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">套管 · 支撑与隔离</text><text x=\"363\" y=\"126\" fill=\"#49645b\" font-size=\"13\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">油管 · 输送通道</text><text x=\"363\" y=\"215\" fill=\"#49645b\" font-size=\"12\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">砂粒堆积阻塞流动通道</text><text x=\"363\" y=\"240\" fill=\"#49645b\" font-size=\"11\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">图形是概念剖面，不按比例绘制</text><text x=\"35\" y=\"288\" fill=\"#49645b\" font-size=\"11\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">专业概念 → 可观察的故障 → 可比较的处理路径</text></svg></div><p>目的：把修井选择转为分类＋回归两个任务。</p><h4>02 组织数据</h4><p>生成 1500 口模拟井、3000 条路径记录。先按井分成 900 / 300 / 300 井，再展开候选记录。数值标准化只使用训练集均值和标准差。</p><div class=\"figure-scroll\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 300\" role=\"img\" aria-label=\"按井分组划分，避免同井记录泄漏\"><title>按井分组划分，避免同井记录泄漏</title><rect x=\"28\" y=\"80\" width=\"350\" height=\"55\" rx=\"8\" fill=\"#dcebdc\"/><rect x=\"378\" y=\"80\" width=\"115\" height=\"55\" fill=\"#e4edf1\"/><rect x=\"493\" y=\"80\" width=\"115\" height=\"55\" rx=\"8\" fill=\"#f1e7d6\"/><text x=\"45\" y=\"112\" fill=\"#49645b\" font-size=\"13\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">训练 · 900 井 / 1800 条</text><text x=\"389\" y=\"112\" fill=\"#49645b\" font-size=\"11\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">验证 300井</text><text x=\"502\" y=\"112\" fill=\"#49645b\" font-size=\"11\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">测试 300井</text><text x=\"28\" y=\"53\" fill=\"#49645b\" font-size=\"16\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">先划分井，再展开每口井的两条候选路径</text><path d=\"M108 153V200H270M177 153V177H270\" stroke=\"#8ba08f\" fill=\"none\"/><text x=\"285\" y=\"185\" fill=\"#49645b\" font-size=\"16\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">同井记录不跨集合</text><text x=\"28\" y=\"254\" fill=\"#49645b\" font-size=\"12\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">训练更新权重；验证选择最优轮次；测试仅用于报告泛化误差。</text></svg></div><p>目的：避免同井不同方案泄漏到验证或测试集合。</p><h4>03 训练网络</h4><p>输入 3 个故障编码、6 个路径编码及 3 个标准化井况特征。共享两层 ReLU；一个头预测完成可能性，另一个头预测标准化对数工时。</p><div class=\"figure-scroll\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 300\" role=\"img\" aria-label=\"多任务神经网络：12维输入、共享隐藏层和两个输出\"><title>多任务神经网络：12维输入、共享隐藏层和两个输出</title><path d=\"M127 129H223M337 129H420M420 129V73H482M420 129V196H482\" stroke=\"#9ab3a2\" stroke-width=\"2\" fill=\"none\"/><rect x=\"15\" y=\"86\" width=\"118\" height=\"86\" rx=\"12\" fill=\"#edf3e9\"/><text x=\"30\" y=\"115\" fill=\"#49645b\" font-size=\"13\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">井况＋候选路径</text><text x=\"30\" y=\"142\" fill=\"#49645b\" font-size=\"11\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">12 维编码</text><rect x=\"223\" y=\"78\" width=\"128\" height=\"103\" rx=\"12\" fill=\"#dbe9db\"/><text x=\"246\" y=\"110\" fill=\"#49645b\" font-size=\"13\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">共享隐藏层</text><text x=\"247\" y=\"137\" fill=\"#49645b\" font-size=\"19\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">24 → 12</text><text x=\"246\" y=\"159\" fill=\"#49645b\" font-size=\"11\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">ReLU 非线性</text><rect x=\"482\" y=\"39\" width=\"143\" height=\"66\" rx=\"10\" fill=\"#e4eee4\"/><text x=\"496\" y=\"67\" fill=\"#49645b\" font-size=\"13\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">目标完成可能性</text><text x=\"496\" y=\"89\" fill=\"#49645b\" font-size=\"11\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">Sigmoid · 分类头</text><rect x=\"482\" y=\"163\" width=\"143\" height=\"66\" rx=\"10\" fill=\"#e7eef2\"/><text x=\"496\" y=\"191\" fill=\"#49645b\" font-size=\"13\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">预计作业工时</text><text x=\"496\" y=\"213\" fill=\"#49645b\" font-size=\"11\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">对数工时 · 回归头</text><text x=\"25\" y=\"268\" fill=\"#49645b\" font-size=\"12\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">同一组井况表示，同时服务两个学习目标；权重由训练数据更新。</text></svg></div><p>目的：通过反向传播和 Adam 更新真实权重。</p><h4>04 检验结果</h4><p>绘制训练/验证损失，保留验证损失最低的轮次。测试集上比较神经网络、同数据案例推理和路径均值基线；展示 Brier、MAE 与校准图。</p><div class=\"figure-scroll\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 300\" role=\"img\" aria-label=\"按井分组划分，避免同井记录泄漏\"><title>按井分组划分，避免同井记录泄漏</title><rect x=\"28\" y=\"80\" width=\"350\" height=\"55\" rx=\"8\" fill=\"#dcebdc\"/><rect x=\"378\" y=\"80\" width=\"115\" height=\"55\" fill=\"#e4edf1\"/><rect x=\"493\" y=\"80\" width=\"115\" height=\"55\" rx=\"8\" fill=\"#f1e7d6\"/><text x=\"45\" y=\"112\" fill=\"#49645b\" font-size=\"13\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">训练 · 900 井 / 1800 条</text><text x=\"389\" y=\"112\" fill=\"#49645b\" font-size=\"11\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">验证 300井</text><text x=\"502\" y=\"112\" fill=\"#49645b\" font-size=\"11\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">测试 300井</text><text x=\"28\" y=\"53\" fill=\"#49645b\" font-size=\"16\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">先划分井，再展开每口井的两条候选路径</text><path d=\"M108 153V200H270M177 153V177H270\" stroke=\"#8ba08f\" fill=\"none\"/><text x=\"285\" y=\"185\" fill=\"#49645b\" font-size=\"16\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">同井记录不跨集合</text><text x=\"28\" y=\"254\" fill=\"#49645b\" font-size=\"12\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">训练更新权重；验证选择最优轮次；测试仅用于报告泛化误差。</text></svg></div><p>目的：用误差和对照判断网络是否有帮助。</p><h4>05 约束与比较</h4><p>先检查故障、设备、相容性及诊断，再在相同目标组内比较预测。时间偏好只影响人工效用，不改变神经网络输出。</p><div class=\"figure-scroll\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 300\" role=\"img\" aria-label=\"知识约束先于神经网络方案比较\"><title>知识约束先于神经网络方案比较</title><rect x=\"20\" y=\"45\" width=\"165\" height=\"70\" rx=\"10\" fill=\"#edf3e9\"/><text x=\"34\" y=\"75\" fill=\"#49645b\" font-size=\"13\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">故障、设备与确认状态</text><text x=\"34\" y=\"97\" fill=\"#49645b\" font-size=\"11\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">不可由模型概率代替</text><path d=\"M187 80H254M330 80H423M330 80V210H423\" fill=\"none\" stroke=\"#9ab3a2\" stroke-width=\"2\"/><path d=\"M292 39l42 41-42 41-42-41Z\" fill=\"#dcebdc\"/><text x=\"266\" y=\"85\" fill=\"#49645b\" font-size=\"12\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">约束检查</text><rect x=\"425\" y=\"44\" width=\"185\" height=\"72\" rx=\"10\" fill=\"#e4eee4\"/><text x=\"440\" y=\"74\" fill=\"#49645b\" font-size=\"13\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">已满足 → 神经网络比较</text><text x=\"440\" y=\"96\" fill=\"#49645b\" font-size=\"11\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">同目标组内权衡工时与结果</text><rect x=\"425\" y=\"174\" width=\"185\" height=\"72\" rx=\"10\" fill=\"#f4e9db\"/><text x=\"440\" y=\"204\" fill=\"#49645b\" font-size=\"13\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">未满足 → 保留排除理由</text><text x=\"440\" y=\"226\" fill=\"#49645b\" font-size=\"11\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">不展示该路径的推荐预测</text><text x=\"20\" y=\"274\" fill=\"#49645b\" font-size=\"12\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">检测目标与处理目标分组，防止“检测更快”被误读为“修复更优”。</text></svg></div><p>目的：高预测值不能覆盖缺失前提，允许没有可用方案。</p><h4>06 解释与记录</h4><p>查看单变量敏感性、参考值替换后的变化、隐藏层激活与训练近邻；导出井况、约束、预测、模型参数和数据版本。</p><div class=\"figure-scroll\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 300\" role=\"img\" aria-label=\"多任务神经网络：12维输入、共享隐藏层和两个输出\"><title>多任务神经网络：12维输入、共享隐藏层和两个输出</title><path d=\"M127 129H223M337 129H420M420 129V73H482M420 129V196H482\" stroke=\"#9ab3a2\" stroke-width=\"2\" fill=\"none\"/><rect x=\"15\" y=\"86\" width=\"118\" height=\"86\" rx=\"12\" fill=\"#edf3e9\"/><text x=\"30\" y=\"115\" fill=\"#49645b\" font-size=\"13\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">井况＋候选路径</text><text x=\"30\" y=\"142\" fill=\"#49645b\" font-size=\"11\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">12 维编码</text><rect x=\"223\" y=\"78\" width=\"128\" height=\"103\" rx=\"12\" fill=\"#dbe9db\"/><text x=\"246\" y=\"110\" fill=\"#49645b\" font-size=\"13\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">共享隐藏层</text><text x=\"247\" y=\"137\" fill=\"#49645b\" font-size=\"19\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">24 → 12</text><text x=\"246\" y=\"159\" fill=\"#49645b\" font-size=\"11\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">ReLU 非线性</text><rect x=\"482\" y=\"39\" width=\"143\" height=\"66\" rx=\"10\" fill=\"#e4eee4\"/><text x=\"496\" y=\"67\" fill=\"#49645b\" font-size=\"13\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">目标完成可能性</text><text x=\"496\" y=\"89\" fill=\"#49645b\" font-size=\"11\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">Sigmoid · 分类头</text><rect x=\"482\" y=\"163\" width=\"143\" height=\"66\" rx=\"10\" fill=\"#e7eef2\"/><text x=\"496\" y=\"191\" fill=\"#49645b\" font-size=\"13\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">预计作业工时</text><text x=\"496\" y=\"213\" fill=\"#49645b\" font-size=\"11\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">对数工时 · 回归头</text><text x=\"25\" y=\"268\" fill=\"#49645b\" font-size=\"12\" font-family=\"Segoe UI,Microsoft YaHei,sans-serif\">同一组井况表示，同时服务两个学习目标；权重由训练数据更新。</text></svg></div><p>目的：让预测可以追溯、比较和复算。</p></div>"
+      },
+      "fails": [
+        {
+          "name": "同井泄漏",
+          "why": "必须按井划分数据，不能把同井不同路径随机分到训练和测试。"
+        },
+        {
+          "name": "高概率覆盖约束",
+          "why": "设备缺失、化学相容性或诊断未确认的路径不提供推荐预测。"
+        },
+        {
+          "name": "跨目标混排",
+          "why": "补充检测与处理评估分组，不能把诊断完成当成修复成功。"
+        },
+        {
+          "name": "模拟性能当成现场效果",
+          "why": "数据完全合成；测试指标只支持本教学分布。"
+        }
+      ]
+    },
+    "demo": {
+      "label": "案例演示",
+      "mode": "page",
+      "html": "demo/experiment.html",
+      "intro": "比较候选方案，查看真实网络激活、敏感性与训练近邻；可在浏览器重新训练，核对测试误差并导出数据和模型。",
+      "height": 1100
+    }
+  }
+}

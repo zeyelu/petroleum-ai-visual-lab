@@ -1,0 +1,29 @@
+Data: Equinor Volve, processed and distributed by Miguel Corrales, Hussein Hoteit and Matteo Ravasi, Seis2Rock.
+Record: https://zenodo.org/records/11481946
+License declared by record: Creative Commons Attribution 4.0 International (CC BY 4.0).
+https://creativecommons.org/licenses/by/4.0/
+Changes: subset, finite/range filtering, depth selection and seismic angle-band features. This teaching MLP is not the original Seis2Rock algorithm. No endorsement by the authors is implied.
+[
+  {
+    "name": "Volve2dfenceby1degree_NO_15_9-19_BT2.npz",
+    "size": 318274599,
+    "crc32": 1326506233,
+    "sha256": "246d019046fb76d3014d343bce0e72807001025b72f402cd0a663ea7f84e6989",
+    "rows": 223,
+    "valid_depth": [
+      2416,
+      3304
+    ]
+  },
+  {
+    "name": "Volve2dfenceby1degree_NO_15_9-19_A.npz",
+    "size": 303526323,
+    "crc32": 494902330,
+    "sha256": "0e8874dbcb7aa0c55a00473e822ec1f948587d1c195fce76b4c5dc29399fe914",
+    "rows": 127,
+    "valid_depth": [
+      2736,
+      3240
+    ]
+  }
+]

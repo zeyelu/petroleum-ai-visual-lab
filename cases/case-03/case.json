@@ -1,0 +1,171 @@
+{
+  "id": "casing-unet-lab",
+  "sceneId": "wo3",
+  "title": "套管损伤智能识别 · 神经网络可视化新版",
+  "version": "3.0.0",
+  "updated": "2026-10-29",
+  "status": "ready",
+  "methods": [
+    "cv"
+  ],
+  "tabs": {
+    "background": {
+      "label": "专业背景",
+      "lede": "从半径和壁厚数值出发，用轻量 U-Net 寻找空间连续的异常区域。测量、预测、标签与误差保持同一坐标，点击一处即可追踪证据。",
+      "judge": [
+        {
+          "label": "方法",
+          "value": "LIGHTWEIGHT U-NET",
+          "desc": "卷积神经网络 / U-Net / 语义分割 / 掩码学习"
+        },
+        {
+          "label": "数据",
+          "value": "100",
+          "desc": "100 口模拟井，可导出逐点深度、方位、半径、壁厚和双标签；未引入真实油田图像。"
+        },
+        {
+          "label": "价值",
+          "value": "可视复核",
+          "desc": "六张联动展开图使用相同坐标和固定色域；误报与漏检分色，缺测单独用灰色。阈值—召回曲线解释交互取舍，圆周截面帮助理解二维图与井下空间的联系。"
+        },
+        {
+          "label": "难度",
+          "value": "高",
+          "desc": "难度高：真实数据分布、标签质量与不确定性决定了模型能否迁移。这里训练的是教学小模型，重点是把输入、计算和输出可视化，不能据此推断现场效果。"
+        }
+      ],
+      "sections": [
+        {
+          "no": 1,
+          "en": "CONTEXT",
+          "title": "专业概念与当前问题",
+          "html": "<style>.neuraldoc{font:14px/1.9 \"Segoe UI\",\"Microsoft YaHei\",sans-serif;color:#294439}.neuraldoc svg{display:block;width:100%;height:auto;max-width:780px;background:#f4f7f0;border-radius:12px}.neuraldoc svg text{font-size:12px;fill:#63796f}.neuraldoc .chart{overflow-x:auto}.neuraldoc h4{margin-top:22px}.neuraldoc a{color:#286c5a}</style><div class=\"neuraldoc\"><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 600 280\" role=\"img\" aria-label=\"从圆柱截面到二维展开图\"><title>从圆柱截面到二维展开图</title><ellipse cx=\"150\" cy=\"130\" rx=\"82\" ry=\"64\" fill=\"#e7eef0\" stroke=\"#7995a3\" stroke-width=\"17\"/><circle cx=\"150\" cy=\"130\" r=\"69\" fill=\"none\" stroke=\"#286c5a\" stroke-dasharray=\"5 4\"/><rect x=\"320\" y=\"50\" width=\"210\" height=\"170\" fill=\"#e7eee5\" stroke=\"#9bb8a1\"/><ellipse cx=\"412\" cy=\"145\" rx=\"24\" ry=\"46\" fill=\"#a6c4ad\"/><text x=\"75\" y=\"252\" >截面：半径与壁厚</text><text x=\"337\" y=\"252\" >展开：方位 × 深度</text><text x=\"326\" y=\"32\" >0°                        360°</text></svg></div><p>多臂井径近似描述内壁形状，超声测量可提供壁厚信息。椭圆化可能改变通行空间，局部减薄可能削弱屏障；两种现象可同时出现。壁厚损失不等于已经证明腐蚀原因。</p><p>套管保护井筒并承担隔离作用。多臂井径与超声壁厚对不同现象敏感，人工逐条曲线检查容易遗漏连续空间结构。将圆柱沿深度和方位展开，可以把局部异常的范围和相互关系看得更清楚。</p></div>"
+        },
+        {
+          "no": 2,
+          "en": "INTELLIGENCE",
+          "title": "AI 的具体介入点",
+          "html": "<style>.neuraldoc{font:14px/1.9 \"Segoe UI\",\"Microsoft YaHei\",sans-serif;color:#294439}.neuraldoc svg{display:block;width:100%;height:auto;max-width:780px;background:#f4f7f0;border-radius:12px}.neuraldoc svg text{font-size:12px;fill:#63796f}.neuraldoc .chart{overflow-x:auto}.neuraldoc h4{margin-top:22px}.neuraldoc a{color:#286c5a}</style><div class=\"neuraldoc\"><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 140\" role=\"img\" aria-label=\"方法计算流程\"><title>方法计算流程</title><rect x=\"8\" y=\"38\" width=\"135.25\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"20\" y=\"62\" >01</text><text x=\"20\" y=\"85\" >48×36×3 输入</text><path d=\"M144.25 71h14\" stroke=\"#91ae98\"/><rect x=\"159.25\" y=\"38\" width=\"135.25\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"171.25\" y=\"62\" >02</text><text x=\"171.25\" y=\"85\" >编码 / 下采样</text><path d=\"M295.5 71h14\" stroke=\"#91ae98\"/><rect x=\"310.5\" y=\"38\" width=\"135.25\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"322.5\" y=\"62\" >03</text><text x=\"322.5\" y=\"85\" >跳连 / 上采样</text><path d=\"M446.75 71h14\" stroke=\"#91ae98\"/><rect x=\"461.75\" y=\"38\" width=\"135.25\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"473.75\" y=\"62\" >04</text><text x=\"473.75\" y=\"85\" >2 通道分割</text></svg></div><p>输入不是屏幕截图，而是半径偏差、壁厚损失、有效性掩码三个数值通道。轻量 U-Net 通过编码、下采样、上采样和跳连输出几何变形与壁厚损失两个独立分割通道。方位方向采用周期填充，缺测不计入监督损失与指标。</p><p>壁厚损失可提示腐蚀等可能原因，但本演示不诊断损伤成因，不输出套管强度、安全等级或处置参数。两标签可重叠，未经校准的 sigmoid 得分不是现场损伤概率。</p></div>"
+        },
+        {
+          "no": 3,
+          "en": "DATA",
+          "title": "数据与标签条件",
+          "html": "<style>.neuraldoc{font:14px/1.9 \"Segoe UI\",\"Microsoft YaHei\",sans-serif;color:#294439}.neuraldoc svg{display:block;width:100%;height:auto;max-width:780px;background:#f4f7f0;border-radius:12px}.neuraldoc svg text{font-size:12px;fill:#63796f}.neuraldoc .chart{overflow-x:auto}.neuraldoc h4{margin-top:22px}.neuraldoc a{color:#286c5a}</style><div class=\"neuraldoc\"><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 140\" role=\"img\" aria-label=\"方法计算流程\"><title>方法计算流程</title><rect x=\"8\" y=\"38\" width=\"135.25\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"20\" y=\"62\" >01</text><text x=\"20\" y=\"85\" >整组划分</text><path d=\"M144.25 71h14\" stroke=\"#91ae98\"/><rect x=\"159.25\" y=\"38\" width=\"135.25\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"171.25\" y=\"62\" >02</text><text x=\"171.25\" y=\"85\" >训练更新</text><path d=\"M295.5 71h14\" stroke=\"#91ae98\"/><rect x=\"310.5\" y=\"38\" width=\"135.25\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"322.5\" y=\"62\" >03</text><text x=\"322.5\" y=\"85\" >验证选择</text><path d=\"M446.75 71h14\" stroke=\"#91ae98\"/><rect x=\"461.75\" y=\"38\" width=\"135.25\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"473.75\" y=\"62\" >04</text><text x=\"473.75\" y=\"85\" >独立测试</text></svg></div><ul><li>100 口模拟井，60 训练 / 20 验证 / 20 测试，按整井划分。每井 48 个深度采样 ×36 个方位，降采样自原始 96×36 测量。</li><li>输入：半径偏差 /3、名义壁厚减实测壁厚 /3、有效性 0/1；单位为 mm，名义值每井略有变化。</li><li>标签由模拟几何扰动与厚度损失超过 0.8 mm 定义；双通道独立，缺测标签记为 −1。</li><li>真实部署需要标定、人工复核区域标注、多井跨工具资料与成因证据；不能把像素数量当作独立井数量。</li></ul><p>100 口模拟井，可导出逐点深度、方位、半径、壁厚和双标签；未引入真实油田图像。</p></div>"
+        },
+        {
+          "no": 4,
+          "en": "VALUE",
+          "title": "价值、难度与边界",
+          "html": "<style>.neuraldoc{font:14px/1.9 \"Segoe UI\",\"Microsoft YaHei\",sans-serif;color:#294439}.neuraldoc svg{display:block;width:100%;height:auto;max-width:780px;background:#f4f7f0;border-radius:12px}.neuraldoc svg text{font-size:12px;fill:#63796f}.neuraldoc .chart{overflow-x:auto}.neuraldoc h4{margin-top:22px}.neuraldoc a{color:#286c5a}</style><div class=\"neuraldoc\"><p>难度高：真实数据分布、标签质量与不确定性决定了模型能否迁移。这里训练的是教学小模型，重点是把输入、计算和输出可视化，不能据此推断现场效果。</p><p>六张联动展开图使用相同坐标和固定色域；误报与漏检分色，缺测单独用灰色。阈值—召回曲线解释交互取舍，圆周截面帮助理解二维图与井下空间的联系。</p><p>通用方法：卷积神经网络、U-Net、语义分割、掩码学习。</p><p><a href=\"https://www.tensorflow.org/js\" target=\"_blank\" rel=\"noopener\">TensorFlow.js · 浏览器机器学习</a> · <a href=\"https://arxiv.org/abs/1505.04597\" target=\"_blank\" rel=\"noopener\">Ronneberger 等 · U-Net</a></p></div>"
+        }
+      ]
+    },
+    "workflow": {
+      "label": "案例流程",
+      "title": "从专业场景到可复核的智能分析",
+      "lead": [
+        "输入不是屏幕截图，而是半径偏差、壁厚损失、有效性掩码三个数值通道。轻量 U-Net 通过编码、下采样、上采样和跳连输出几何变形与壁厚损失两个独立分割通道。方位方向采用周期填充，缺测不计入监督损失与指标。"
+      ],
+      "stats": [
+        [
+          "独立模拟井",
+          "100"
+        ],
+        [
+          "每井输入",
+          "48 × 36 × 3"
+        ],
+        [
+          "网络参数",
+          "1602"
+        ],
+        [
+          "独立输出标签",
+          "2"
+        ]
+      ],
+      "steps": [
+        {
+          "name": "理解测量",
+          "role": "可视分析",
+          "do": "半径主要反映内壁几何，厚度反映壁体剩余厚度；分别编码后共同输入。",
+          "effect": "数值通道",
+          "trap": "减薄不能单凭图形唯一归因于腐蚀。"
+        },
+        {
+          "name": "组织空间",
+          "role": "可视分析",
+          "do": "对原 96 深度采样取间隔点，方位左右相邻；有效性通道保留缺测信息。",
+          "effect": "48×36×3 张量",
+          "trap": "灰色缺测不是测量零，也不是正常标签。"
+        },
+        {
+          "name": "按井划分",
+          "role": "可视分析",
+          "do": "整井分组，避免同一空间场的相邻像素泄漏到不同集合。",
+          "effect": "60 / 20 / 20 井",
+          "trap": "1728 个测点不等于 1728 口井。"
+        },
+        {
+          "name": "训练 U-Net",
+          "role": "可视分析",
+          "do": "轻量编码器学习局部模式，下采样扩大邻域，跳连保留定位信息。",
+          "effect": "双通道分割得分",
+          "trap": "激活通道不能直接命名为某种损伤原因。"
+        },
+        {
+          "name": "阈值与检验",
+          "role": "可视分析",
+          "do": "按标签阈值二值化，排除缺测，计算 TP、FP、FN 和 IoU。",
+          "effect": "区域判断与混淆计数",
+          "trap": "调低阈值通常提高召回，同时可能引入误报。"
+        },
+        {
+          "name": "空间复核",
+          "role": "可视分析",
+          "do": "点击区域，回到相同深度的圆周剖面和数值，比较旧决策树并保存快照。",
+          "effect": "位置与原始测量",
+          "trap": "模型提示用于复核，不是自动给出承载与处置结论。"
+        }
+      ],
+      "metrics": {
+        "title": "每一步的输入与输出",
+        "html": "<style>.neuraldoc{font:14px/1.9 \"Segoe UI\",\"Microsoft YaHei\",sans-serif;color:#294439}.neuraldoc svg{display:block;width:100%;height:auto;max-width:780px;background:#f4f7f0;border-radius:12px}.neuraldoc svg text{font-size:12px;fill:#63796f}.neuraldoc .chart{overflow-x:auto}.neuraldoc h4{margin-top:22px}.neuraldoc a{color:#286c5a}</style><div class=\"neuraldoc\"><h4>01 理解测量</h4><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 140\" role=\"img\" aria-label=\"方法计算流程\"><title>方法计算流程</title><rect x=\"8\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"20\" y=\"62\" >01</text><text x=\"20\" y=\"85\" >半径 / 壁厚</text><path d=\"M194.66666666666666 71h14\" stroke=\"#91ae98\"/><rect x=\"209.66666666666666\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"221.66666666666666\" y=\"62\" >02</text><text x=\"221.66666666666666\" y=\"85\" >理解测量</text><path d=\"M396.3333333333333 71h14\" stroke=\"#91ae98\"/><rect x=\"411.3333333333333\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"423.3333333333333\" y=\"62\" >03</text><text x=\"423.3333333333333\" y=\"85\" >数值通道</text></svg></div><p>半径主要反映内壁几何，厚度反映壁体剩余厚度；分别编码后共同输入。</p><p>复核：减薄不能单凭图形唯一归因于腐蚀。</p><p>演示位置：背景截面与展开图</p><h4>02 组织空间</h4><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 140\" role=\"img\" aria-label=\"方法计算流程\"><title>方法计算流程</title><rect x=\"8\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"20\" y=\"62\" >01</text><text x=\"20\" y=\"85\" >深度 × 方位</text><path d=\"M194.66666666666666 71h14\" stroke=\"#91ae98\"/><rect x=\"209.66666666666666\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"221.66666666666666\" y=\"62\" >02</text><text x=\"221.66666666666666\" y=\"85\" >组织空间</text><path d=\"M396.3333333333333 71h14\" stroke=\"#91ae98\"/><rect x=\"411.3333333333333\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"423.3333333333333\" y=\"62\" >03</text><text x=\"423.3333333333333\" y=\"85\" >48×36×3 张量</text></svg></div><p>对原 96 深度采样取间隔点，方位左右相邻；有效性通道保留缺测信息。</p><p>复核：灰色缺测不是测量零，也不是正常标签。</p><p>演示位置：测量热图及点选读数</p><h4>03 按井划分</h4><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 140\" role=\"img\" aria-label=\"方法计算流程\"><title>方法计算流程</title><rect x=\"8\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"20\" y=\"62\" >01</text><text x=\"20\" y=\"85\" >100 口模拟井</text><path d=\"M194.66666666666666 71h14\" stroke=\"#91ae98\"/><rect x=\"209.66666666666666\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"221.66666666666666\" y=\"62\" >02</text><text x=\"221.66666666666666\" y=\"85\" >按井划分</text><path d=\"M396.3333333333333 71h14\" stroke=\"#91ae98\"/><rect x=\"411.3333333333333\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"423.3333333333333\" y=\"62\" >03</text><text x=\"423.3333333333333\" y=\"85\" >60 / 20 / 20 井</text></svg></div><p>整井分组，避免同一空间场的相邻像素泄漏到不同集合。</p><p>复核：1728 个测点不等于 1728 口井。</p><p>演示位置：数据档案与导出</p><h4>04 训练 U-Net</h4><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 140\" role=\"img\" aria-label=\"方法计算流程\"><title>方法计算流程</title><rect x=\"8\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"20\" y=\"62\" >01</text><text x=\"20\" y=\"85\" >数值张量与掩码</text><path d=\"M194.66666666666666 71h14\" stroke=\"#91ae98\"/><rect x=\"209.66666666666666\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"221.66666666666666\" y=\"62\" >02</text><text x=\"221.66666666666666\" y=\"85\" >训练 U-Net</text><path d=\"M396.3333333333333 71h14\" stroke=\"#91ae98\"/><rect x=\"411.3333333333333\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"423.3333333333333\" y=\"62\" >03</text><text x=\"423.3333333333333\" y=\"85\" >双通道分割得分</text></svg></div><p>轻量编码器学习局部模式，下采样扩大邻域，跳连保留定位信息。</p><p>复核：激活通道不能直接命名为某种损伤原因。</p><p>演示位置：六个真实卷积通道与损失曲线</p><h4>05 阈值与检验</h4><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 140\" role=\"img\" aria-label=\"方法计算流程\"><title>方法计算流程</title><rect x=\"8\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"20\" y=\"62\" >01</text><text x=\"20\" y=\"85\" >得分 / 模拟标签</text><path d=\"M194.66666666666666 71h14\" stroke=\"#91ae98\"/><rect x=\"209.66666666666666\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"221.66666666666666\" y=\"62\" >02</text><text x=\"221.66666666666666\" y=\"85\" >阈值与检验</text><path d=\"M396.3333333333333 71h14\" stroke=\"#91ae98\"/><rect x=\"411.3333333333333\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"423.3333333333333\" y=\"62\" >03</text><text x=\"423.3333333333333\" y=\"85\" >区域判断与混淆计数</text></svg></div><p>按标签阈值二值化，排除缺测，计算 TP、FP、FN 和 IoU。</p><p>复核：调低阈值通常提高召回，同时可能引入误报。</p><p>演示位置：阈值滑块、误差图及指标表</p><h4>06 空间复核</h4><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 140\" role=\"img\" aria-label=\"方法计算流程\"><title>方法计算流程</title><rect x=\"8\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"20\" y=\"62\" >01</text><text x=\"20\" y=\"85\" >候选区域</text><path d=\"M194.66666666666666 71h14\" stroke=\"#91ae98\"/><rect x=\"209.66666666666666\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"221.66666666666666\" y=\"62\" >02</text><text x=\"221.66666666666666\" y=\"85\" >空间复核</text><path d=\"M396.3333333333333 71h14\" stroke=\"#91ae98\"/><rect x=\"411.3333333333333\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"423.3333333333333\" y=\"62\" >03</text><text x=\"423.3333333333333\" y=\"85\" >位置与原始测量</text></svg></div><p>点击区域，回到相同深度的圆周剖面和数值，比较旧决策树并保存快照。</p><p>复核：模型提示用于复核，不是自动给出承载与处置结论。</p><p>演示位置：联动测点、截面与导出</p></div>"
+      },
+      "fails": [
+        {
+          "name": "理解测量",
+          "why": "减薄不能单凭图形唯一归因于腐蚀。"
+        },
+        {
+          "name": "组织空间",
+          "why": "灰色缺测不是测量零，也不是正常标签。"
+        },
+        {
+          "name": "按井划分",
+          "why": "1728 个测点不等于 1728 口井。"
+        },
+        {
+          "name": "训练 U-Net",
+          "why": "激活通道不能直接命名为某种损伤原因。"
+        },
+        {
+          "name": "阈值与检验",
+          "why": "调低阈值通常提高召回，同时可能引入误报。"
+        },
+        {
+          "name": "空间复核",
+          "why": "模型提示用于复核，不是自动给出承载与处置结论。"
+        }
+      ]
+    },
+    "demo": {
+      "label": "案例演示",
+      "mode": "page",
+      "html": "demo/experiment.html",
+      "intro": "从半径和壁厚数值出发，用轻量 U-Net 寻找空间连续的异常区域。测量、预测、标签与误差保持同一坐标，点击一处即可追踪证据。",
+      "height": 1150
+    }
+  }
+}

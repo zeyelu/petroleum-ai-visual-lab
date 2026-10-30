@@ -1,0 +1,157 @@
+{
+  "id": "geo-public-facies-20261030",
+  "sceneId": "s2",
+  "title": "地震相智能分类 · 公开数据可视分析",
+  "version": "1.0.0",
+  "updated": "2026-10-30",
+  "status": "ready",
+  "methods": [
+    "cv"
+  ],
+  "tabs": {
+    "background": {
+      "label": "专业背景",
+      "lede": "用六种离散颜色组织地震剖面的解释类别，联动查看网络预测、参考标签和不确定区域。",
+      "judge": [
+        {
+          "label": "方法",
+          "value": "局部 CNN · 六分类",
+          "desc": "小型 CNN 从 7×7 振幅窗口提取纹理，输出六类 softmax 分数；最大值决定色块，归一化熵标出模型犹豫的位置。"
+        },
+        {
+          "label": "数据",
+          "value": "Netherlands F3 / Facies Classification Benchmark",
+          "desc": "MIT"
+        },
+        {
+          "label": "价值",
+          "value": "可视复核",
+          "desc": "类别采用固定离散配色，分数和熵使用顺序色带；参考与预测保持坐标一致，点击像素查看六类分数，避免只看总体准确率。"
+        },
+        {
+          "label": "难度",
+          "value": "中",
+          "desc": "中：类别不均衡、解释具有主观性，局部纹理可能不足以区分地层。"
+        }
+      ],
+      "sections": [
+        {
+          "no": 1,
+          "en": "CONTEXT",
+          "title": "专业场景与可视化概念",
+          "html": "<div style=\"font:14px/1.9 'Microsoft YaHei',sans-serif;color:#29434a\"><p><b>地震相</b>：将反射形态相近的区域归为一组。连续性、倾角、振幅和频率是视觉线索；地质解释还需要井和沉积背景。</p><p>地震相由反射结构、连续性和振幅等特征共同描述，传统划分依赖解释经验。视觉上相似的区域并不一定具有相同地质意义。</p><svg viewBox=\"0 0 720 100\" role=\"img\" aria-label=\"数据处理流程\"><rect x=\"3\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"82\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">地震相</text><text x=\"165\" y=\"53\" fill=\"#688279\">→</text><rect x=\"183\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"262\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">地震响应</text><text x=\"345\" y=\"53\" fill=\"#688279\">→</text><rect x=\"363\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"442\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">可视化表示</text><text x=\"525\" y=\"53\" fill=\"#688279\">→</text><rect x=\"543\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"622\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">人工复核</text></svg></div>"
+        },
+        {
+          "no": 2,
+          "en": "AI",
+          "title": "AI 的介入点",
+          "html": "<div style=\"font:14px/1.9 'Microsoft YaHei',sans-serif;color:#29434a\"><p>小型 CNN 从 7×7 振幅窗口提取纹理，输出六类 softmax 分数；最大值决定色块，归一化熵标出模型犹豫的位置。</p><svg viewBox=\"0 0 720 100\" role=\"img\" aria-label=\"数据处理流程\"><rect x=\"3\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"82\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">局部振幅</text><text x=\"165\" y=\"53\" fill=\"#688279\">→</text><rect x=\"183\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"262\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">神经网络</text><text x=\"345\" y=\"53\" fill=\"#688279\">→</text><rect x=\"363\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"442\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">预测结果</text><text x=\"525\" y=\"53\" fill=\"#688279\">→</text><rect x=\"543\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"622\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">误差复核</text></svg><p>pₖ = exp(zₖ) / Σexp(zⱼ)；H = −Σpₖ ln(pₖ) / ln(6)</p></div>"
+        },
+        {
+          "no": 3,
+          "en": "DATA",
+          "title": "数据、规模和标注条件",
+          "html": "<div style=\"font:14px/1.9 'Microsoft YaHei',sans-serif;color:#29434a\"><ul><li>业务规模建议：切片 / 小立方体、测井与岩心解释、统一相带定义；按区域划分。</li><li>本例：4 张 F3 剖面重采样为 160×96；2 张训练、1 张验证、1 张测试。</li><li>类别含上、中、下北海群、Rijnland/Chalk、Scruff、Zechstein；所有标签来自公开解释模型。</li></ul><svg viewBox=\"0 0 720 100\" role=\"img\" aria-label=\"数据处理流程\"><rect x=\"3\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"82\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">训练区域</text><text x=\"165\" y=\"53\" fill=\"#688279\">→</text><rect x=\"183\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"262\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">验证选轮次</text><text x=\"345\" y=\"53\" fill=\"#688279\">→</text><rect x=\"363\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"442\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">保留测试</text><text x=\"525\" y=\"53\" fill=\"#688279\">→</text><rect x=\"543\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"622\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">公开结果</text></svg><p>显示及模型均用 160×96 等索引重采样网格，最近邻取样；标签也同网格取样。小型 CNN 预测中心像素所属解释类别，不等同于完整沉积环境判定。</p></div>"
+        },
+        {
+          "no": 4,
+          "en": "LIMITS",
+          "title": "难度、参考方向与边界",
+          "html": "<div style=\"font:14px/1.9 'Microsoft YaHei',sans-serif;color:#29434a\"><p>中：类别不均衡、解释具有主观性，局部纹理可能不足以区分地层。</p><p>类别采用固定离散配色，分数和熵使用顺序色带；参考与预测保持坐标一致，点击像素查看六类分数，避免只看总体准确率。</p><p>使用 F3 基准的六个岩石地层解释类别，作为地震相识别的教学代理任务；不能直接将六类等同于六种沉积环境。显示经重采样，未复现论文的大型网络和正式划分。</p><p>通用参考方向：局部 CNN · 六分类、空间隔离检验、可视分析。</p><p><a href=\"https://zenodo.org/records/3755060\" target=\"_blank\" rel=\"noopener\">公开数据与原作者</a></p></div>"
+        }
+      ]
+    },
+    "workflow": {
+      "label": "案例流程",
+      "title": "从专业问题到可复核的预测",
+      "lead": [
+        "小型 CNN 从 7×7 振幅窗口提取纹理，输出六类 softmax 分数；最大值决定色块，归一化熵标出模型犹豫的位置。",
+        "使用 F3 基准的六个岩石地层解释类别，作为地震相识别的教学代理任务；不能直接将六类等同于六种沉积环境。显示经重采样，未复现论文的大型网络和正式划分。"
+      ],
+      "stats": [
+        [
+          "训练样本",
+          "1162"
+        ],
+        [
+          "验证样本",
+          "548"
+        ],
+        [
+          "网络参数",
+          "2578"
+        ]
+      ],
+      "steps": [
+        {
+          "name": "统一解释类别",
+          "role": "可视分析",
+          "do": "保留原始类别编号、名字与配色。",
+          "effect": "六类标签字典",
+          "trap": "地层类别与沉积环境不等价。"
+        },
+        {
+          "name": "空间隔离采样",
+          "role": "可视分析",
+          "do": "按 inline 分组，训练中对六类均衡抽取局部窗口。",
+          "effect": "训练 / 验证 / 测试分布",
+          "trap": "相邻切片随机打散会高估泛化。"
+        },
+        {
+          "name": "卷积提取纹理",
+          "role": "可视分析",
+          "do": "卷积核与局部振幅相乘求和，ReLU 后映射到六类分数。",
+          "effect": "6 通道特征 → 六分类",
+          "trap": "纹理窗口小会遗漏整体地层顺序。"
+        },
+        {
+          "name": "分数转为可视结果",
+          "role": "可视分析",
+          "do": "最大分数确定类别，同时计算熵。",
+          "effect": "类别色块与熵图",
+          "trap": "低熵并不保证正确，也不是校准后的置信度。"
+        },
+        {
+          "name": "逐类检验",
+          "role": "可视分析",
+          "do": "用混淆矩阵、宏平均召回率检查小类别。",
+          "effect": "错误分布 / 六类分数",
+          "trap": "大类别占比高时，总体准确率容易掩盖小类失败。"
+        }
+      ],
+      "metrics": {
+        "title": "输入、计算、输出与检查点",
+        "html": "<div style=\"font:14px/1.9 'Microsoft YaHei',sans-serif;color:#29434a\"><h4>01 统一解释类别</h4><svg viewBox=\"0 0 720 100\" role=\"img\" aria-label=\"数据处理流程\"><rect x=\"3\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"82\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">公开数据</text><text x=\"165\" y=\"53\" fill=\"#688279\">→</text><rect x=\"183\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"262\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">统一解释类别</text><text x=\"345\" y=\"53\" fill=\"#688279\">→</text><rect x=\"363\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"442\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">六类标签字典</text><text x=\"525\" y=\"53\" fill=\"#688279\">→</text><rect x=\"543\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"622\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">检查与解释</text></svg><p>保留原始类别编号、名字与配色。</p><p>检查点：地层类别与沉积环境不等价。</p><h4>02 空间隔离采样</h4><svg viewBox=\"0 0 720 100\" role=\"img\" aria-label=\"数据处理流程\"><rect x=\"3\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"82\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">公开数据</text><text x=\"165\" y=\"53\" fill=\"#688279\">→</text><rect x=\"183\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"262\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">空间隔离采样</text><text x=\"345\" y=\"53\" fill=\"#688279\">→</text><rect x=\"363\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"442\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">训练 / 验证 / </text><text x=\"525\" y=\"53\" fill=\"#688279\">→</text><rect x=\"543\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"622\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">检查与解释</text></svg><p>按 inline 分组，训练中对六类均衡抽取局部窗口。</p><p>检查点：相邻切片随机打散会高估泛化。</p><h4>03 卷积提取纹理</h4><svg viewBox=\"0 0 720 100\" role=\"img\" aria-label=\"数据处理流程\"><rect x=\"3\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"82\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">公开数据</text><text x=\"165\" y=\"53\" fill=\"#688279\">→</text><rect x=\"183\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"262\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">卷积提取纹理</text><text x=\"345\" y=\"53\" fill=\"#688279\">→</text><rect x=\"363\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"442\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">6 通道特征 → 六</text><text x=\"525\" y=\"53\" fill=\"#688279\">→</text><rect x=\"543\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"622\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">检查与解释</text></svg><p>卷积核与局部振幅相乘求和，ReLU 后映射到六类分数。</p><p>检查点：纹理窗口小会遗漏整体地层顺序。</p><h4>04 分数转为可视结果</h4><svg viewBox=\"0 0 720 100\" role=\"img\" aria-label=\"数据处理流程\"><rect x=\"3\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"82\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">公开数据</text><text x=\"165\" y=\"53\" fill=\"#688279\">→</text><rect x=\"183\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"262\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">分数转为可视结果</text><text x=\"345\" y=\"53\" fill=\"#688279\">→</text><rect x=\"363\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"442\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">类别色块与熵图</text><text x=\"525\" y=\"53\" fill=\"#688279\">→</text><rect x=\"543\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"622\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">检查与解释</text></svg><p>最大分数确定类别，同时计算熵。</p><p>检查点：低熵并不保证正确，也不是校准后的置信度。</p><h4>05 逐类检验</h4><svg viewBox=\"0 0 720 100\" role=\"img\" aria-label=\"数据处理流程\"><rect x=\"3\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"82\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">公开数据</text><text x=\"165\" y=\"53\" fill=\"#688279\">→</text><rect x=\"183\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"262\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">逐类检验</text><text x=\"345\" y=\"53\" fill=\"#688279\">→</text><rect x=\"363\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"442\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">错误分布 / 六类分</text><text x=\"525\" y=\"53\" fill=\"#688279\">→</text><rect x=\"543\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"622\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">检查与解释</text></svg><p>用混淆矩阵、宏平均召回率检查小类别。</p><p>检查点：大类别占比高时，总体准确率容易掩盖小类失败。</p></div>"
+      },
+      "fails": [
+        {
+          "name": "统一解释类别",
+          "why": "地层类别与沉积环境不等价。"
+        },
+        {
+          "name": "空间隔离采样",
+          "why": "相邻切片随机打散会高估泛化。"
+        },
+        {
+          "name": "卷积提取纹理",
+          "why": "纹理窗口小会遗漏整体地层顺序。"
+        },
+        {
+          "name": "分数转为可视结果",
+          "why": "低熵并不保证正确，也不是校准后的置信度。"
+        },
+        {
+          "name": "逐类检验",
+          "why": "大类别占比高时，总体准确率容易掩盖小类失败。"
+        }
+      ]
+    },
+    "demo": {
+      "label": "案例演示",
+      "mode": "page",
+      "html": "demo/experiment.html",
+      "intro": "用六种离散颜色组织地震剖面的解释类别，联动查看网络预测、参考标签和不确定区域。",
+      "height": 1350
+    }
+  }
+}
