@@ -1,0 +1,171 @@
+{
+  "id": "workover-tcn-lab",
+  "sceneId": "wo4",
+  "title": "修井作业风险预警",
+  "version": "3.0.0",
+  "updated": "2026-10-29",
+  "status": "ready",
+  "methods": [
+    "ts"
+  ],
+  "tabs": {
+    "background": {
+      "label": "专业背景",
+      "lede": "让因果 TCN 学习正常压力与扭矩的下一步变化，把观测与预测的差异转成可见的残差证据。逐秒回放、窗口对照和事件级评价共同解释报警，并以联合统计补足一步预测可能漏检的持续偏移。",
+      "judge": [
+        {
+          "label": "方法",
+          "value": "CAUSAL TEMPORAL NETWORK",
+          "desc": "TCN / 膨胀因果卷积 / 预测残差 / 事件级评估"
+        },
+        {
+          "label": "数据",
+          "value": "24 / 6",
+          "desc": "46 段独立教学记录，完整信号与事件标签可导出。旋转段为 240–719 秒，完整窗口从 264 秒开始可用。"
+        },
+        {
+          "label": "价值",
+          "value": "可视复核",
+          "desc": "实际—预测曲线使用固定坐标，残差热图显示哪一通道偏离，报警时间线与模拟真值对齐。交互回放把“输入窗口、预测时刻、报警延迟”三个概念分开。"
+        },
+        {
+          "label": "难度",
+          "value": "高",
+          "desc": "难度高：真实数据分布、标签质量与不确定性决定了模型能否迁移。这里训练的是教学小模型，重点是把输入、计算和输出可视化，不能据此推断现场效果。"
+        }
+      ],
+      "sections": [
+        {
+          "no": 1,
+          "en": "CONTEXT",
+          "title": "专业概念与当前问题",
+          "html": "<style>.neuraldoc{font:14px/1.9 \"Segoe UI\",\"Microsoft YaHei\",sans-serif;color:#294439}.neuraldoc svg{display:block;width:100%;height:auto;max-width:780px;background:#f4f7f0;border-radius:12px}.neuraldoc svg text{font-size:12px;fill:#63796f}.neuraldoc .chart{overflow-x:auto}.neuraldoc h4{margin-top:22px}.neuraldoc a{color:#286c5a}</style><div class=\"neuraldoc\"><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 600 280\" role=\"img\" aria-label=\"历史窗口与一步预测残差\"><title>历史窗口与一步预测残差</title><path d=\"M30 182L75 150 120 170 165 96 210 121 255 80 300 108 345 57\" fill=\"none\" stroke=\"#286c5a\" stroke-width=\"3\"/><rect x=\"170\" y=\"37\" width=\"190\" height=\"165\" fill=\"#286c5a\" opacity=\".08\"/><path d=\"M345 57L400 82\" fill=\"none\" stroke=\"#597e9b\" stroke-width=\"3\" stroke-dasharray=\"5 4\"/><circle cx=\"400\" cy=\"160\" r=\"6\" fill=\"#b47e50\"/><path d=\"M400 82V160\" stroke=\"#b47e50\"/><text x=\"40\" y=\"235\" >过去的压力与扭矩</text><text x=\"410\" y=\"85\" >下一秒预测</text><text x=\"410\" y=\"164\" >实际观测</text><text x=\"410\" y=\"125\" >差值 → 残差</text></svg></div><p>压力像流动阻力的反馈，扭矩像旋转所需的负荷。二者会随工序变化；异常也可能表现为关系偏离，而不是单个数值越界。这里监测“旋转处理”阶段，提示值得复核的时刻。</p><p>修井不同工序的压力和扭矩水平不同。直接使用一条全局阈值容易混淆正常工序变化与异常；有些异常表现为二者关系失衡，需要结合工序和过去的变化复核。</p></div>"
+        },
+        {
+          "no": 2,
+          "en": "INTELLIGENCE",
+          "title": "AI 的具体介入点",
+          "html": "<style>.neuraldoc{font:14px/1.9 \"Segoe UI\",\"Microsoft YaHei\",sans-serif;color:#294439}.neuraldoc svg{display:block;width:100%;height:auto;max-width:780px;background:#f4f7f0;border-radius:12px}.neuraldoc svg text{font-size:12px;fill:#63796f}.neuraldoc .chart{overflow-x:auto}.neuraldoc h4{margin-top:22px}.neuraldoc a{color:#286c5a}</style><div class=\"neuraldoc\"><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 140\" role=\"img\" aria-label=\"方法计算流程\"><title>方法计算流程</title><rect x=\"8\" y=\"38\" width=\"135.25\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"20\" y=\"62\" >01</text><text x=\"20\" y=\"85\" >过去 24 秒</text><path d=\"M144.25 71h14\" stroke=\"#91ae98\"/><rect x=\"159.25\" y=\"38\" width=\"135.25\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"171.25\" y=\"62\" >02</text><text x=\"171.25\" y=\"85\" >因果 TCN</text><path d=\"M295.5 71h14\" stroke=\"#91ae98\"/><rect x=\"310.5\" y=\"38\" width=\"135.25\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"322.5\" y=\"62\" >03</text><text x=\"322.5\" y=\"85\" >下一秒 P / T</text><path d=\"M446.75 71h14\" stroke=\"#91ae98\"/><rect x=\"461.75\" y=\"38\" width=\"135.25\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"473.75\" y=\"62\" >04</text><text x=\"473.75\" y=\"85\" >残差 → 持续报警</text></svg></div><p>在正常旋转段训练因果 TCN：过去 24 秒的标准化双变量输入，预测下一秒压力与扭矩。三层膨胀率 1/2/4 的残差块只访问过去，计算有效感受野 15 步。标准化预测残差由独立正常记录校准阈值，持续超限才报警。另设 TCN 与联合统计 B 的报警并集作为复核通道；单步预测可能跟随持续偏移，联合效果必须分解到各自证据。</p><p>这是可视化异常检测，不是事故成因诊断。只在旋转处理且历史窗口完整时输出，缺测或工序变化会暂停判断。模拟事件为核对标签，不进入模型或阈值。</p></div>"
+        },
+        {
+          "no": 3,
+          "en": "DATA",
+          "title": "数据与标签条件",
+          "html": "<style>.neuraldoc{font:14px/1.9 \"Segoe UI\",\"Microsoft YaHei\",sans-serif;color:#294439}.neuraldoc svg{display:block;width:100%;height:auto;max-width:780px;background:#f4f7f0;border-radius:12px}.neuraldoc svg text{font-size:12px;fill:#63796f}.neuraldoc .chart{overflow-x:auto}.neuraldoc h4{margin-top:22px}.neuraldoc a{color:#286c5a}</style><div class=\"neuraldoc\"><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 140\" role=\"img\" aria-label=\"方法计算流程\"><title>方法计算流程</title><rect x=\"8\" y=\"38\" width=\"135.25\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"20\" y=\"62\" >01</text><text x=\"20\" y=\"85\" >整组划分</text><path d=\"M144.25 71h14\" stroke=\"#91ae98\"/><rect x=\"159.25\" y=\"38\" width=\"135.25\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"171.25\" y=\"62\" >02</text><text x=\"171.25\" y=\"85\" >训练更新</text><path d=\"M295.5 71h14\" stroke=\"#91ae98\"/><rect x=\"310.5\" y=\"38\" width=\"135.25\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"322.5\" y=\"62\" >03</text><text x=\"322.5\" y=\"85\" >验证选择</text><path d=\"M446.75 71h14\" stroke=\"#91ae98\"/><rect x=\"461.75\" y=\"38\" width=\"135.25\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"473.75\" y=\"62\" >04</text><text x=\"473.75\" y=\"85\" >独立测试</text></svg></div><ul><li>压力 MPa、扭矩 kN·m、工序、有效性、时间；采样间隔 1 秒，每段 900 秒。</li><li>训练 24 段和验证 6 段均正常；8 段独立正常记录校准阈值；8 段混合异常记录用于事件评估。</li><li>按整段划分，训练均值和标准差只由正常旋转训练段计算。缺测与完整窗口检查一致。</li><li>模拟关系偏离、缓慢漂移、持续偏移及缺测；异常起止时间随种子变化，标签只用于评价。</li></ul><p>46 段独立教学记录，完整信号与事件标签可导出。旋转段为 240–719 秒，完整窗口从 264 秒开始可用。</p></div>"
+        },
+        {
+          "no": 4,
+          "en": "VALUE",
+          "title": "价值、难度与边界",
+          "html": "<style>.neuraldoc{font:14px/1.9 \"Segoe UI\",\"Microsoft YaHei\",sans-serif;color:#294439}.neuraldoc svg{display:block;width:100%;height:auto;max-width:780px;background:#f4f7f0;border-radius:12px}.neuraldoc svg text{font-size:12px;fill:#63796f}.neuraldoc .chart{overflow-x:auto}.neuraldoc h4{margin-top:22px}.neuraldoc a{color:#286c5a}</style><div class=\"neuraldoc\"><p>难度高：真实数据分布、标签质量与不确定性决定了模型能否迁移。这里训练的是教学小模型，重点是把输入、计算和输出可视化，不能据此推断现场效果。</p><p>实际—预测曲线使用固定坐标，残差热图显示哪一通道偏离，报警时间线与模拟真值对齐。交互回放把“输入窗口、预测时刻、报警延迟”三个概念分开。</p><p>通用方法：TCN、膨胀因果卷积、预测残差、事件级评估。</p><p><a href=\"https://www.tensorflow.org/js\" target=\"_blank\" rel=\"noopener\">TensorFlow.js · 浏览器机器学习</a> · <a href=\"https://arxiv.org/abs/1803.01271\" target=\"_blank\" rel=\"noopener\">Bai 等 · 因果时序卷积评估</a></p></div>"
+        }
+      ]
+    },
+    "workflow": {
+      "label": "案例流程",
+      "title": "从专业场景到可复核的智能分析",
+      "lead": [
+        "在正常旋转段训练因果 TCN：过去 24 秒的标准化双变量输入，预测下一秒压力与扭矩。三层膨胀率 1/2/4 的残差块只访问过去，计算有效感受野 15 步。标准化预测残差由独立正常记录校准阈值，持续超限才报警。另设 TCN 与联合统计 B 的报警并集作为复核通道；单步预测可能跟随持续偏移，联合效果必须分解到各自证据。"
+      ],
+      "stats": [
+        [
+          "训练 / 验证段",
+          "24 / 6"
+        ],
+        [
+          "校准 / 测试段",
+          "8 / 8"
+        ],
+        [
+          "每段采样",
+          "900 × 2"
+        ],
+        [
+          "网络参数",
+          "642"
+        ]
+      ],
+      "steps": [
+        {
+          "name": "界定工序",
+          "role": "可视分析",
+          "do": "先识别方法适用范围，避免将待机、循环的水平差异作为旋转异常。",
+          "effect": "旋转段分析范围",
+          "trap": "本模型不覆盖全部工序风险。"
+        },
+        {
+          "name": "构造历史",
+          "role": "可视分析",
+          "do": "窗口只含过去，任一缺测或跨工序就暂不预测；缩放统计仅用训练集。",
+          "effect": "24×2 标准化窗口",
+          "trap": "不可使用未来数据补齐窗口或归一化。"
+        },
+        {
+          "name": "学习正常",
+          "role": "可视分析",
+          "do": "三层因果膨胀块学习历史关系，MSE 下降表示正常一步预测误差减少。",
+          "effect": "下一秒预测网络",
+          "trap": "低预测误差不自动等于高事件检出率。"
+        },
+        {
+          "name": "校准残差",
+          "role": "可视分析",
+          "do": "压力和扭矩误差按训练标准差统一量纲，RMS 合成一条分数。",
+          "effect": "残差分位阈值",
+          "trap": "分位阈值不是事故概率或承诺误报率。"
+        },
+        {
+          "name": "持续判定",
+          "role": "可视分析",
+          "do": "连续超限才触发，恢复和缺测终止当前事件。回放不显示尚未到来的观测。",
+          "effect": "报警起止事件",
+          "trap": "孤立尖峰与持续异常不能用同一事件定义含糊处理。"
+        },
+        {
+          "name": "事件复核",
+          "role": "可视分析",
+          "do": "只评价已结束事件，对齐 TCN 有效窗口比较统计基线 A/B；导出证据。",
+          "effect": "召回 / 延迟 / 误报",
+          "trap": "这是检出延迟，不是已验证的事故提前预警时间。"
+        }
+      ],
+      "metrics": {
+        "title": "每一步的输入与输出",
+        "html": "<style>.neuraldoc{font:14px/1.9 \"Segoe UI\",\"Microsoft YaHei\",sans-serif;color:#294439}.neuraldoc svg{display:block;width:100%;height:auto;max-width:780px;background:#f4f7f0;border-radius:12px}.neuraldoc svg text{font-size:12px;fill:#63796f}.neuraldoc .chart{overflow-x:auto}.neuraldoc h4{margin-top:22px}.neuraldoc a{color:#286c5a}</style><div class=\"neuraldoc\"><h4>01 界定工序</h4><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 140\" role=\"img\" aria-label=\"方法计算流程\"><title>方法计算流程</title><rect x=\"8\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"20\" y=\"62\" >01</text><text x=\"20\" y=\"85\" >阶段标签与信号</text><path d=\"M194.66666666666666 71h14\" stroke=\"#91ae98\"/><rect x=\"209.66666666666666\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"221.66666666666666\" y=\"62\" >02</text><text x=\"221.66666666666666\" y=\"85\" >界定工序</text><path d=\"M396.3333333333333 71h14\" stroke=\"#91ae98\"/><rect x=\"411.3333333333333\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"423.3333333333333\" y=\"62\" >03</text><text x=\"423.3333333333333\" y=\"85\" >旋转段分析范围</text></svg></div><p>先识别方法适用范围，避免将待机、循环的水平差异作为旋转异常。</p><p>复核：本模型不覆盖全部工序风险。</p><p>演示位置：工序状态与空白预测段</p><h4>02 构造历史</h4><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 140\" role=\"img\" aria-label=\"方法计算流程\"><title>方法计算流程</title><rect x=\"8\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"20\" y=\"62\" >01</text><text x=\"20\" y=\"85\" >过去 24 秒</text><path d=\"M194.66666666666666 71h14\" stroke=\"#91ae98\"/><rect x=\"209.66666666666666\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"221.66666666666666\" y=\"62\" >02</text><text x=\"221.66666666666666\" y=\"85\" >构造历史</text><path d=\"M396.3333333333333 71h14\" stroke=\"#91ae98\"/><rect x=\"411.3333333333333\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"423.3333333333333\" y=\"62\" >03</text><text x=\"423.3333333333333\" y=\"85\" >24×2 标准化窗口</text></svg></div><p>窗口只含过去，任一缺测或跨工序就暂不预测；缩放统计仅用训练集。</p><p>复核：不可使用未来数据补齐窗口或归一化。</p><p>演示位置：当前窗口说明与缺测回放</p><h4>03 学习正常</h4><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 140\" role=\"img\" aria-label=\"方法计算流程\"><title>方法计算流程</title><rect x=\"8\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"20\" y=\"62\" >01</text><text x=\"20\" y=\"85\" >正常训练 / 验证段</text><path d=\"M194.66666666666666 71h14\" stroke=\"#91ae98\"/><rect x=\"209.66666666666666\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"221.66666666666666\" y=\"62\" >02</text><text x=\"221.66666666666666\" y=\"85\" >学习正常</text><path d=\"M396.3333333333333 71h14\" stroke=\"#91ae98\"/><rect x=\"411.3333333333333\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"423.3333333333333\" y=\"62\" >03</text><text x=\"423.3333333333333\" y=\"85\" >下一秒预测网络</text></svg></div><p>三层因果膨胀块学习历史关系，MSE 下降表示正常一步预测误差减少。</p><p>复核：低预测误差不自动等于高事件检出率。</p><p>演示位置：训练曲线与真实预测</p><h4>04 校准残差</h4><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 140\" role=\"img\" aria-label=\"方法计算流程\"><title>方法计算流程</title><rect x=\"8\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"20\" y=\"62\" >01</text><text x=\"20\" y=\"85\" >独立正常段</text><path d=\"M194.66666666666666 71h14\" stroke=\"#91ae98\"/><rect x=\"209.66666666666666\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"221.66666666666666\" y=\"62\" >02</text><text x=\"221.66666666666666\" y=\"85\" >校准残差</text><path d=\"M396.3333333333333 71h14\" stroke=\"#91ae98\"/><rect x=\"411.3333333333333\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"423.3333333333333\" y=\"62\" >03</text><text x=\"423.3333333333333\" y=\"85\" >残差分位阈值</text></svg></div><p>压力和扭矩误差按训练标准差统一量纲，RMS 合成一条分数。</p><p>复核：分位阈值不是事故概率或承诺误报率。</p><p>演示位置：残差热图与分位选择</p><h4>05 持续判定</h4><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 140\" role=\"img\" aria-label=\"方法计算流程\"><title>方法计算流程</title><rect x=\"8\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"20\" y=\"62\" >01</text><text x=\"20\" y=\"85\" >残差随时间变化</text><path d=\"M194.66666666666666 71h14\" stroke=\"#91ae98\"/><rect x=\"209.66666666666666\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"221.66666666666666\" y=\"62\" >02</text><text x=\"221.66666666666666\" y=\"85\" >持续判定</text><path d=\"M396.3333333333333 71h14\" stroke=\"#91ae98\"/><rect x=\"411.3333333333333\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"423.3333333333333\" y=\"62\" >03</text><text x=\"423.3333333333333\" y=\"85\" >报警起止事件</text></svg></div><p>连续超限才触发，恢复和缺测终止当前事件。回放不显示尚未到来的观测。</p><p>复核：孤立尖峰与持续异常不能用同一事件定义含糊处理。</p><p>演示位置：播放、阈值线、报警时间线</p><h4>06 事件复核</h4><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 140\" role=\"img\" aria-label=\"方法计算流程\"><title>方法计算流程</title><rect x=\"8\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"20\" y=\"62\" >01</text><text x=\"20\" y=\"85\" >真值与报警</text><path d=\"M194.66666666666666 71h14\" stroke=\"#91ae98\"/><rect x=\"209.66666666666666\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"221.66666666666666\" y=\"62\" >02</text><text x=\"221.66666666666666\" y=\"85\" >事件复核</text><path d=\"M396.3333333333333 71h14\" stroke=\"#91ae98\"/><rect x=\"411.3333333333333\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"423.3333333333333\" y=\"62\" >03</text><text x=\"423.3333333333333\" y=\"85\" >召回 / 延迟 / 误报</text></svg></div><p>只评价已结束事件，对齐 TCN 有效窗口比较统计基线 A/B；导出证据。</p><p>复核：这是检出延迟，不是已验证的事故提前预警时间。</p><p>演示位置：事件表与分析快照</p></div>"
+      },
+      "fails": [
+        {
+          "name": "界定工序",
+          "why": "本模型不覆盖全部工序风险。"
+        },
+        {
+          "name": "构造历史",
+          "why": "不可使用未来数据补齐窗口或归一化。"
+        },
+        {
+          "name": "学习正常",
+          "why": "低预测误差不自动等于高事件检出率。"
+        },
+        {
+          "name": "校准残差",
+          "why": "分位阈值不是事故概率或承诺误报率。"
+        },
+        {
+          "name": "持续判定",
+          "why": "孤立尖峰与持续异常不能用同一事件定义含糊处理。"
+        },
+        {
+          "name": "事件复核",
+          "why": "这是检出延迟，不是已验证的事故提前预警时间。"
+        }
+      ]
+    },
+    "demo": {
+      "label": "案例演示",
+      "mode": "page",
+      "html": "demo/experiment.html",
+      "intro": "让因果 TCN 学习正常压力与扭矩的下一步变化，把观测与预测的差异转成可见的残差证据。逐秒回放、窗口对照和事件级评价共同解释报警，并以联合统计补足一步预测可能漏检的持续偏移。",
+      "height": 1150
+    }
+  }
+}

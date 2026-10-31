@@ -1,0 +1,157 @@
+{
+  "id": "geo-public-fault-20261030",
+  "sceneId": "s1",
+  "title": "地震断层自动解释 · 公开数据可视分析",
+  "version": "1.0.0",
+  "updated": "2026-10-30",
+  "status": "ready",
+  "methods": [
+    "cv"
+  ],
+  "tabs": {
+    "background": {
+      "label": "专业背景",
+      "lede": "从一条地震剖面出发，观察反射层的中断，再用小型卷积网络标出值得解释员复核的位置。",
+      "judge": [
+        {
+          "label": "方法",
+          "value": "局部 CNN · 二分类",
+          "desc": "7×7 振幅邻域 → 3×3 卷积的 6 个特征通道 → 全连接层 → 断层分数。改变阈值，观察漏检与误检如何交换。"
+        },
+        {
+          "label": "数据",
+          "value": "Netherlands F3 / Facies Classification Benchmark",
+          "desc": "MIT"
+        },
+        {
+          "label": "价值",
+          "value": "可视复核",
+          "desc": "相同位置、相同尺度并排比较；青色表达模型高分，橙色表达参考带。阈值滑块揭示精确率与召回率的取舍。"
+        },
+        {
+          "label": "难度",
+          "value": "高",
+          "desc": "高：断层稀少、参考线不完备，坐标转换和跨区域迁移均可能带来误差。"
+        }
+      ],
+      "sections": [
+        {
+          "no": 1,
+          "en": "CONTEXT",
+          "title": "专业场景与可视化概念",
+          "html": "<div style=\"font:14px/1.9 'Microsoft YaHei',sans-serif;color:#29434a\"><p><b>断层</b>：地层受力后破裂并发生相对位移。地震剖面上常见条纹突然中断或错开；但中断并非一定是断层。</p><p>地层两侧发生错动会打断反射的连续性。人工需要沿大量剖面追踪断层；强振幅、倾斜地层和噪声都可能造成误判。</p><svg viewBox=\"0 0 720 100\" role=\"img\" aria-label=\"数据处理流程\"><rect x=\"3\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"82\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">断层</text><text x=\"165\" y=\"53\" fill=\"#688279\">→</text><rect x=\"183\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"262\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">地震响应</text><text x=\"345\" y=\"53\" fill=\"#688279\">→</text><rect x=\"363\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"442\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">可视化表示</text><text x=\"525\" y=\"53\" fill=\"#688279\">→</text><rect x=\"543\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"622\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">人工复核</text></svg></div>"
+        },
+        {
+          "no": 2,
+          "en": "AI",
+          "title": "AI 的介入点",
+          "html": "<div style=\"font:14px/1.9 'Microsoft YaHei',sans-serif;color:#29434a\"><p>7×7 振幅邻域 → 3×3 卷积的 6 个特征通道 → 全连接层 → 断层分数。改变阈值，观察漏检与误检如何交换。</p><svg viewBox=\"0 0 720 100\" role=\"img\" aria-label=\"数据处理流程\"><rect x=\"3\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"82\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">局部振幅</text><text x=\"165\" y=\"53\" fill=\"#688279\">→</text><rect x=\"183\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"262\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">神经网络</text><text x=\"345\" y=\"53\" fill=\"#688279\">→</text><rect x=\"363\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"442\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">预测结果</text><text x=\"525\" y=\"53\" fill=\"#688279\">→</text><rect x=\"543\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"622\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">误差复核</text></svg><p>p = sigmoid(W₂ ReLU(W₁ Conv₃×₃(X₇×₇) + b₁) + b₂)</p></div>"
+        },
+        {
+          "no": 3,
+          "en": "DATA",
+          "title": "数据、规模和标注条件",
+          "html": "<div style=\"font:14px/1.9 'Microsoft YaHei',sans-serif;color:#29434a\"><ul><li>业务规模建议：多个工区的地震体与专家断层解释，标注稀少区域需单独处理。</li><li>本例：5 张 F3 裁剪剖面，3 张训练、1 张验证、1 张测试；相邻分组至少间隔 20 条 inline。</li><li>公开折线经坐标映射形成 ±2 trace 参考带，距离 2–7 trace 的区域不参与评估，避免模糊边界。</li></ul><svg viewBox=\"0 0 720 100\" role=\"img\" aria-label=\"数据处理流程\"><rect x=\"3\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"82\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">训练区域</text><text x=\"165\" y=\"53\" fill=\"#688279\">→</text><rect x=\"183\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"262\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">验证选轮次</text><text x=\"345\" y=\"53\" fill=\"#688279\">→</text><rect x=\"363\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"442\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">保留测试</text><text x=\"525\" y=\"53\" fill=\"#688279\">→</text><rect x=\"543\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"622\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">公开结果</text></svg><p>公开归档的连续前缀，原始体 601×901×255；已解码 75 条 inline。未取得整个 raw.zip，因此未验证完整归档 MD5。</p></div>"
+        },
+        {
+          "no": 4,
+          "en": "LIMITS",
+          "title": "难度、参考方向与边界",
+          "html": "<div style=\"font:14px/1.9 'Microsoft YaHei',sans-serif;color:#29434a\"><p>高：断层稀少、参考线不完备，坐标转换和跨区域迁移均可能带来误差。</p><p>相同位置、相同尺度并排比较；青色表达模型高分，橙色表达参考带。阈值滑块揭示精确率与召回率的取舍。</p><p>演示是二维局部 CNN，不是完整 3D U-Net。参考标签只来自一组公开人工折线；分数未经概率校准，不代表地质置信概率。评价只覆盖已定义的参考线邻域。</p><p>通用参考方向：局部 CNN · 二分类、空间隔离检验、可视分析。</p><p><a href=\"https://zenodo.org/records/3755060\" target=\"_blank\" rel=\"noopener\">公开数据与原作者</a></p></div>"
+        }
+      ]
+    },
+    "workflow": {
+      "label": "案例流程",
+      "title": "从专业问题到可复核的预测",
+      "lead": [
+        "7×7 振幅邻域 → 3×3 卷积的 6 个特征通道 → 全连接层 → 断层分数。改变阈值，观察漏检与误检如何交换。",
+        "演示是二维局部 CNN，不是完整 3D U-Net。参考标签只来自一组公开人工折线；分数未经概率校准，不代表地质置信概率。评价只覆盖已定义的参考线邻域。"
+      ],
+      "stats": [
+        [
+          "训练样本",
+          "440"
+        ],
+        [
+          "验证样本",
+          "194"
+        ],
+        [
+          "网络参数",
+          "2493"
+        ]
+      ],
+      "steps": [
+        {
+          "name": "读取与配准",
+          "role": "可视分析",
+          "do": "把公开折线的世界坐标转换到地震网格。",
+          "effect": "振幅图 + 参考折线",
+          "trap": "深度按论文给出的范围近似线性映射；局部偏差不能隐去。"
+        },
+        {
+          "name": "构造局部标签",
+          "role": "可视分析",
+          "do": "扩宽参考折线并隔离模糊边界，只采样明确的邻域。",
+          "effect": "阳性带 / 近邻对照 / 忽略区",
+          "trap": "未标注的全剖面区域不能全部当成真阴性。"
+        },
+        {
+          "name": "训练局部 CNN",
+          "role": "可视分析",
+          "do": "从训练剖面抽取 7×7 图像块，平衡正负样本并反向传播。",
+          "effect": "损失曲线与模型权重",
+          "trap": "平衡采样后的分数不等同于现场断层发生概率。"
+        },
+        {
+          "name": "独立剖面检验",
+          "role": "可视分析",
+          "do": "验证集选择轮次，测试剖面只用于展示泛化。",
+          "effect": "参考邻域的 IoU / 精确率 / 召回率",
+          "trap": "不能宣称当前小样本结果代表整个 F3 工区。"
+        },
+        {
+          "name": "交互复核与导出",
+          "role": "可视分析",
+          "do": "拖动阈值，定位错误并导出图像与数值。",
+          "effect": "候选解释结果",
+          "trap": "最终断层组合和工程解释仍需专业判断。"
+        }
+      ],
+      "metrics": {
+        "title": "输入、计算、输出与检查点",
+        "html": "<div style=\"font:14px/1.9 'Microsoft YaHei',sans-serif;color:#29434a\"><h4>01 读取与配准</h4><svg viewBox=\"0 0 720 100\" role=\"img\" aria-label=\"数据处理流程\"><rect x=\"3\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"82\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">公开数据</text><text x=\"165\" y=\"53\" fill=\"#688279\">→</text><rect x=\"183\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"262\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">读取与配准</text><text x=\"345\" y=\"53\" fill=\"#688279\">→</text><rect x=\"363\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"442\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">振幅图 + 参考折线</text><text x=\"525\" y=\"53\" fill=\"#688279\">→</text><rect x=\"543\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"622\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">检查与解释</text></svg><p>把公开折线的世界坐标转换到地震网格。</p><p>检查点：深度按论文给出的范围近似线性映射；局部偏差不能隐去。</p><h4>02 构造局部标签</h4><svg viewBox=\"0 0 720 100\" role=\"img\" aria-label=\"数据处理流程\"><rect x=\"3\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"82\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">公开数据</text><text x=\"165\" y=\"53\" fill=\"#688279\">→</text><rect x=\"183\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"262\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">构造局部标签</text><text x=\"345\" y=\"53\" fill=\"#688279\">→</text><rect x=\"363\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"442\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">阳性带 / 近邻对照</text><text x=\"525\" y=\"53\" fill=\"#688279\">→</text><rect x=\"543\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"622\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">检查与解释</text></svg><p>扩宽参考折线并隔离模糊边界，只采样明确的邻域。</p><p>检查点：未标注的全剖面区域不能全部当成真阴性。</p><h4>03 训练局部 CNN</h4><svg viewBox=\"0 0 720 100\" role=\"img\" aria-label=\"数据处理流程\"><rect x=\"3\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"82\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">公开数据</text><text x=\"165\" y=\"53\" fill=\"#688279\">→</text><rect x=\"183\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"262\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">训练局部 CNN</text><text x=\"345\" y=\"53\" fill=\"#688279\">→</text><rect x=\"363\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"442\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">损失曲线与模型权重</text><text x=\"525\" y=\"53\" fill=\"#688279\">→</text><rect x=\"543\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"622\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">检查与解释</text></svg><p>从训练剖面抽取 7×7 图像块，平衡正负样本并反向传播。</p><p>检查点：平衡采样后的分数不等同于现场断层发生概率。</p><h4>04 独立剖面检验</h4><svg viewBox=\"0 0 720 100\" role=\"img\" aria-label=\"数据处理流程\"><rect x=\"3\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"82\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">公开数据</text><text x=\"165\" y=\"53\" fill=\"#688279\">→</text><rect x=\"183\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"262\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">独立剖面检验</text><text x=\"345\" y=\"53\" fill=\"#688279\">→</text><rect x=\"363\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"442\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">参考邻域的 IoU </text><text x=\"525\" y=\"53\" fill=\"#688279\">→</text><rect x=\"543\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"622\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">检查与解释</text></svg><p>验证集选择轮次，测试剖面只用于展示泛化。</p><p>检查点：不能宣称当前小样本结果代表整个 F3 工区。</p><h4>05 交互复核与导出</h4><svg viewBox=\"0 0 720 100\" role=\"img\" aria-label=\"数据处理流程\"><rect x=\"3\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"82\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">公开数据</text><text x=\"165\" y=\"53\" fill=\"#688279\">→</text><rect x=\"183\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"262\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">交互复核与导出</text><text x=\"345\" y=\"53\" fill=\"#688279\">→</text><rect x=\"363\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"442\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">候选解释结果</text><text x=\"525\" y=\"53\" fill=\"#688279\">→</text><rect x=\"543\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"622\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">检查与解释</text></svg><p>拖动阈值，定位错误并导出图像与数值。</p><p>检查点：最终断层组合和工程解释仍需专业判断。</p></div>"
+      },
+      "fails": [
+        {
+          "name": "读取与配准",
+          "why": "深度按论文给出的范围近似线性映射；局部偏差不能隐去。"
+        },
+        {
+          "name": "构造局部标签",
+          "why": "未标注的全剖面区域不能全部当成真阴性。"
+        },
+        {
+          "name": "训练局部 CNN",
+          "why": "平衡采样后的分数不等同于现场断层发生概率。"
+        },
+        {
+          "name": "独立剖面检验",
+          "why": "不能宣称当前小样本结果代表整个 F3 工区。"
+        },
+        {
+          "name": "交互复核与导出",
+          "why": "最终断层组合和工程解释仍需专业判断。"
+        }
+      ]
+    },
+    "demo": {
+      "label": "案例演示",
+      "mode": "page",
+      "html": "demo/experiment.html",
+      "intro": "从一条地震剖面出发，观察反射层的中断，再用小型卷积网络标出值得解释员复核的位置。",
+      "height": 1350
+    }
+  }
+}

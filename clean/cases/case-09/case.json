@@ -1,0 +1,157 @@
+{
+  "id": "geo-public-denoise-20261030",
+  "sceneId": "s5",
+  "title": "地震资料噪声压制 · 公开数据可视分析",
+  "version": "1.0.0",
+  "updated": "2026-10-30",
+  "status": "ready",
+  "methods": [
+    "cv"
+  ],
+  "tabs": {
+    "background": {
+      "label": "专业背景",
+      "lede": "向真实地震裁剪片段加入可控噪声，比较小型卷积网络与简单平滑，并检查残差里是否留下了反射结构。",
+      "judge": [
+        {
+          "label": "方法",
+          "value": "全卷积网络 FCN · 回归",
+          "desc": "三层 3×3 卷积把含附加噪声的振幅映射回现场参考振幅。网络与三道水平平均使用相同输入，残差图展示模型移除了什么。"
+        },
+        {
+          "label": "数据",
+          "value": "Netherlands F3 / Facies Classification Benchmark",
+          "desc": "MIT"
+        },
+        {
+          "label": "价值",
+          "value": "可视复核",
+          "desc": "四图共享振幅色标，参考、观测、输出、残差对齐；残差与波形联动，避免自动缩放让坏结果看起来更好。"
+        },
+        {
+          "label": "难度",
+          "value": "中",
+          "desc": "中：真实干净参考难以获得，噪声分布改变会影响网络表现。"
+        }
+      ],
+      "sections": [
+        {
+          "no": 1,
+          "en": "CONTEXT",
+          "title": "专业场景与可视化概念",
+          "html": "<div style=\"font:14px/1.9 'Microsoft YaHei',sans-serif;color:#29434a\"><p><b>信号与噪声</b>：观测 = 有效响应 + 干扰。对真实资料，二者常不可直接分离；本实验人为添加可知干扰，才能量化恢复误差。</p><p>噪声会掩盖弱反射，过度平滑也会抹去真实地层。去噪需要同时检查残留干扰和有效信号损伤，不能只追求画面光滑。</p><svg viewBox=\"0 0 720 100\" role=\"img\" aria-label=\"数据处理流程\"><rect x=\"3\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"82\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">信号与噪声</text><text x=\"165\" y=\"53\" fill=\"#688279\">→</text><rect x=\"183\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"262\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">地震响应</text><text x=\"345\" y=\"53\" fill=\"#688279\">→</text><rect x=\"363\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"442\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">可视化表示</text><text x=\"525\" y=\"53\" fill=\"#688279\">→</text><rect x=\"543\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"622\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">人工复核</text></svg></div>"
+        },
+        {
+          "no": 2,
+          "en": "AI",
+          "title": "AI 的介入点",
+          "html": "<div style=\"font:14px/1.9 'Microsoft YaHei',sans-serif;color:#29434a\"><p>三层 3×3 卷积把含附加噪声的振幅映射回现场参考振幅。网络与三道水平平均使用相同输入，残差图展示模型移除了什么。</p><svg viewBox=\"0 0 720 100\" role=\"img\" aria-label=\"数据处理流程\"><rect x=\"3\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"82\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">局部振幅</text><text x=\"165\" y=\"53\" fill=\"#688279\">→</text><rect x=\"183\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"262\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">神经网络</text><text x=\"345\" y=\"53\" fill=\"#688279\">→</text><rect x=\"363\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"442\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">预测结果</text><text x=\"525\" y=\"53\" fill=\"#688279\">→</text><rect x=\"543\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"622\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">误差复核</text></svg><p>Y = X + ε随机 + a·sin(0.5y+0.3x)；X̂ = Conv₃(ReLU(Conv₂(ReLU(Conv₁(Y)))))</p></div>"
+        },
+        {
+          "no": 3,
+          "en": "DATA",
+          "title": "数据、规模和标注条件",
+          "html": "<div style=\"font:14px/1.9 'Microsoft YaHei',sans-serif;color:#29434a\"><ul><li>业务规模建议：不同工区、不同噪声类型；现场无干净真值时考虑自监督与专业质检。</li><li>本例：5 张 F3 64×96 裁剪；3 张训练、1 张验证、1 张测试。训练切成 16×16 图像块。</li><li>固定随机种子保证比较公平；修改噪声强度时保留模型，直接观察分布偏移。</li></ul><svg viewBox=\"0 0 720 100\" role=\"img\" aria-label=\"数据处理流程\"><rect x=\"3\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"82\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">训练区域</text><text x=\"165\" y=\"53\" fill=\"#688279\">→</text><rect x=\"183\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"262\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">验证选轮次</text><text x=\"345\" y=\"53\" fill=\"#688279\">→</text><rect x=\"363\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"442\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">保留测试</text><text x=\"525\" y=\"53\" fill=\"#688279\">→</text><rect x=\"543\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"622\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">公开结果</text></svg><p>原始网格裁剪：crossline 索引 480:576，深度索引 90:154。现场参考自身含噪；仅评估额外注入噪声的恢复，不宣称现场纯净真值。</p></div>"
+        },
+        {
+          "no": 4,
+          "en": "LIMITS",
+          "title": "难度、参考方向与边界",
+          "html": "<div style=\"font:14px/1.9 'Microsoft YaHei',sans-serif;color:#29434a\"><p>中：真实干净参考难以获得，噪声分布改变会影响网络表现。</p><p>四图共享振幅色标，参考、观测、输出、残差对齐；残差与波形联动，避免自动缩放让坏结果看起来更好。</p><p>公开现场剖面自身并不无噪；本实验只恢复人为附加的随机与相干条纹噪声。相干条纹只是教学干扰，不是严格的面波或多次波物理模拟。</p><p>通用参考方向：全卷积网络 FCN · 回归、空间隔离检验、可视分析。</p><p><a href=\"https://zenodo.org/records/3755060\" target=\"_blank\" rel=\"noopener\">公开数据与原作者</a></p></div>"
+        }
+      ]
+    },
+    "workflow": {
+      "label": "案例流程",
+      "title": "从专业问题到可复核的预测",
+      "lead": [
+        "三层 3×3 卷积把含附加噪声的振幅映射回现场参考振幅。网络与三道水平平均使用相同输入，残差图展示模型移除了什么。",
+        "公开现场剖面自身并不无噪；本实验只恢复人为附加的随机与相干条纹噪声。相干条纹只是教学干扰，不是严格的面波或多次波物理模拟。"
+      ],
+      "stats": [
+        [
+          "训练样本",
+          "72"
+        ],
+        [
+          "验证样本",
+          "24"
+        ],
+        [
+          "网络参数",
+          "225"
+        ]
+      ],
+      "steps": [
+        {
+          "name": "裁剪现场参考",
+          "role": "可视分析",
+          "do": "保留地震振幅及裁剪索引，不把它称为绝对纯净真值。",
+          "effect": "现场参考片段",
+          "trap": "真实资料固有噪声仍存在。"
+        },
+        {
+          "name": "注入可控干扰",
+          "role": "可视分析",
+          "do": "随机噪声与相干条纹分别控制，固定种子重现。",
+          "effect": "参考 X → 输入 Y",
+          "trap": "噪声机制被简化，不等于实际面波处理。"
+        },
+        {
+          "name": "卷积网络训练",
+          "role": "可视分析",
+          "do": "三层卷积学习局部振幅恢复，验证剖面选择轮次。",
+          "effect": "训练损失 / 最佳模型",
+          "trap": "训练噪声范围之外可能失效。"
+        },
+        {
+          "name": "公平比较",
+          "role": "可视分析",
+          "do": "相同含噪输入交给网络和三道水平平均。",
+          "effect": "RMSE 与参考 SNR",
+          "trap": "不要给两种算法不同噪声样本。"
+        },
+        {
+          "name": "检查残差与波形",
+          "role": "可视分析",
+          "do": "联动定位，看移除项是否含有连续反射。",
+          "effect": "输出 / 移除项 / 误差曲线",
+          "trap": "低 RMSE 仍可能掩盖细小地质结构损伤。"
+        }
+      ],
+      "metrics": {
+        "title": "输入、计算、输出与检查点",
+        "html": "<div style=\"font:14px/1.9 'Microsoft YaHei',sans-serif;color:#29434a\"><h4>01 裁剪现场参考</h4><svg viewBox=\"0 0 720 100\" role=\"img\" aria-label=\"数据处理流程\"><rect x=\"3\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"82\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">公开数据</text><text x=\"165\" y=\"53\" fill=\"#688279\">→</text><rect x=\"183\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"262\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">裁剪现场参考</text><text x=\"345\" y=\"53\" fill=\"#688279\">→</text><rect x=\"363\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"442\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">现场参考片段</text><text x=\"525\" y=\"53\" fill=\"#688279\">→</text><rect x=\"543\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"622\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">检查与解释</text></svg><p>保留地震振幅及裁剪索引，不把它称为绝对纯净真值。</p><p>检查点：真实资料固有噪声仍存在。</p><h4>02 注入可控干扰</h4><svg viewBox=\"0 0 720 100\" role=\"img\" aria-label=\"数据处理流程\"><rect x=\"3\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"82\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">公开数据</text><text x=\"165\" y=\"53\" fill=\"#688279\">→</text><rect x=\"183\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"262\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">注入可控干扰</text><text x=\"345\" y=\"53\" fill=\"#688279\">→</text><rect x=\"363\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"442\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">参考 X → 输入 </text><text x=\"525\" y=\"53\" fill=\"#688279\">→</text><rect x=\"543\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"622\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">检查与解释</text></svg><p>随机噪声与相干条纹分别控制，固定种子重现。</p><p>检查点：噪声机制被简化，不等于实际面波处理。</p><h4>03 卷积网络训练</h4><svg viewBox=\"0 0 720 100\" role=\"img\" aria-label=\"数据处理流程\"><rect x=\"3\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"82\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">公开数据</text><text x=\"165\" y=\"53\" fill=\"#688279\">→</text><rect x=\"183\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"262\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">卷积网络训练</text><text x=\"345\" y=\"53\" fill=\"#688279\">→</text><rect x=\"363\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"442\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">训练损失 / 最佳模</text><text x=\"525\" y=\"53\" fill=\"#688279\">→</text><rect x=\"543\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"622\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">检查与解释</text></svg><p>三层卷积学习局部振幅恢复，验证剖面选择轮次。</p><p>检查点：训练噪声范围之外可能失效。</p><h4>04 公平比较</h4><svg viewBox=\"0 0 720 100\" role=\"img\" aria-label=\"数据处理流程\"><rect x=\"3\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"82\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">公开数据</text><text x=\"165\" y=\"53\" fill=\"#688279\">→</text><rect x=\"183\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"262\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">公平比较</text><text x=\"345\" y=\"53\" fill=\"#688279\">→</text><rect x=\"363\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"442\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">RMSE 与参考 S</text><text x=\"525\" y=\"53\" fill=\"#688279\">→</text><rect x=\"543\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"622\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">检查与解释</text></svg><p>相同含噪输入交给网络和三道水平平均。</p><p>检查点：不要给两种算法不同噪声样本。</p><h4>05 检查残差与波形</h4><svg viewBox=\"0 0 720 100\" role=\"img\" aria-label=\"数据处理流程\"><rect x=\"3\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"82\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">公开数据</text><text x=\"165\" y=\"53\" fill=\"#688279\">→</text><rect x=\"183\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"262\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">检查残差与波形</text><text x=\"345\" y=\"53\" fill=\"#688279\">→</text><rect x=\"363\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"442\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">输出 / 移除项 /</text><text x=\"525\" y=\"53\" fill=\"#688279\">→</text><rect x=\"543\" y=\"15\" width=\"158\" height=\"65\" rx=\"7\" fill=\"#edf3f1\" stroke=\"#b5cac6\"/><text x=\"622\" y=\"53\" font-size=\"13\" text-anchor=\"middle\" fill=\"#284a48\">检查与解释</text></svg><p>联动定位，看移除项是否含有连续反射。</p><p>检查点：低 RMSE 仍可能掩盖细小地质结构损伤。</p></div>"
+      },
+      "fails": [
+        {
+          "name": "裁剪现场参考",
+          "why": "真实资料固有噪声仍存在。"
+        },
+        {
+          "name": "注入可控干扰",
+          "why": "噪声机制被简化，不等于实际面波处理。"
+        },
+        {
+          "name": "卷积网络训练",
+          "why": "训练噪声范围之外可能失效。"
+        },
+        {
+          "name": "公平比较",
+          "why": "不要给两种算法不同噪声样本。"
+        },
+        {
+          "name": "检查残差与波形",
+          "why": "低 RMSE 仍可能掩盖细小地质结构损伤。"
+        }
+      ]
+    },
+    "demo": {
+      "label": "案例演示",
+      "mode": "page",
+      "html": "demo/experiment.html",
+      "intro": "向真实地震裁剪片段加入可控噪声，比较小型卷积网络与简单平滑，并检查残差里是否留下了反射结构。",
+      "height": 1350
+    }
+  }
+}

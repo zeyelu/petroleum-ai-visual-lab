@@ -1,0 +1,171 @@
+{
+  "id": "fishing-neural-lab",
+  "sceneId": "wo2",
+  "title": "落物打捞工具智能选型",
+  "version": "3.0.0",
+  "updated": "2026-10-29",
+  "status": "ready",
+  "methods": [
+    "kg"
+  ],
+  "tabs": {
+    "background": {
+      "label": "专业背景",
+      "lede": "用几何规则划定可行范围，再让双塔网络学习落物与工具之间的关系。每个候选都有条件、有证据、有可复核的计算过程。",
+      "judge": [
+        {
+          "label": "方法",
+          "value": "TWO-TOWER NETWORK",
+          "desc": "双塔神经网络 / 多任务分类 / 约束推理 / 近邻检索"
+        },
+        {
+          "label": "数据",
+          "value": "1600",
+          "desc": "先生成 1600 口井，其中 35 口无可行工具，不生成完成标签；剩余 1565 口井展开为可行的落物—工具记录。网页显示实际记录数。全部为教学模拟，可导出完整 JSON。"
+        },
+        {
+          "label": "价值",
+          "value": "可视复核",
+          "desc": "比较表支持候选筛选，剖面图解释几何关系，嵌入折线展示实际网络中间量。对空间量、预测得分与规则状态使用不同编码，避免混淆。"
+        },
+        {
+          "label": "难度",
+          "value": "高",
+          "desc": "难度高：真实数据分布、标签质量与不确定性决定了模型能否迁移。这里训练的是教学小模型，重点是把输入、计算和输出可视化，不能据此推断现场效果。"
+        }
+      ],
+      "sections": [
+        {
+          "no": 1,
+          "en": "CONTEXT",
+          "title": "专业概念与当前问题",
+          "html": "<style>.neuraldoc{font:14px/1.9 \"Segoe UI\",\"Microsoft YaHei\",sans-serif;color:#294439}.neuraldoc svg{display:block;width:100%;height:auto;max-width:780px;background:#f4f7f0;border-radius:12px}.neuraldoc svg text{font-size:12px;fill:#63796f}.neuraldoc .chart{overflow-x:auto}.neuraldoc h4{margin-top:22px}.neuraldoc a{color:#286c5a}</style><div class=\"neuraldoc\"><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 600 280\" role=\"img\" aria-label=\"井筒、工具与落物剖面\"><title>井筒、工具与落物剖面</title><rect x=\"84\" y=\"35\" width=\"192\" height=\"205\" rx=\"10\" fill=\"#edf1ee\" stroke=\"#b4c5bb\" stroke-width=\"12\"/><rect x=\"123.6\" y=\"65\" width=\"112.8\" height=\"90\" fill=\"#cfdfd3\" stroke=\"#286c5a\"/><rect x=\"138\" y=\"170\" width=\"84\" height=\"70\" fill=\"#a9bfcb\"/><rect x=\"150\" y=\"170\" width=\"60\" height=\"70\" fill=\"#edf1ee\"/><text x=\"330\" y=\"80\" >通径 160 mm</text><text x=\"330\" y=\"116\" >工具包络 94 mm</text><text x=\"330\" y=\"152\" >落物外径 70 mm</text><text x=\"330\" y=\"188\" >内孔 50 mm</text><text x=\"80\" y=\"266\" >尺寸示意；纵向位置及比例经过简化</text></svg></div><p>“外抓”像套筒抱住管子，“内抓”从孔内接合。通得过、够得着、接得住是不同条件。图形把三者分开，让模型排序之前先排除不可能的工具。</p><p>断落管柱、杆件与碎屑的接合方式不同。仅看工具名称难以同时考虑井筒通径、尺寸误差、内孔状态与可接合长度。逐条检查规则解决可行性，历史经验帮助比较通过筛选的候选。</p></div>"
+        },
+        {
+          "no": 2,
+          "en": "INTELLIGENCE",
+          "title": "AI 的具体介入点",
+          "html": "<style>.neuraldoc{font:14px/1.9 \"Segoe UI\",\"Microsoft YaHei\",sans-serif;color:#294439}.neuraldoc svg{display:block;width:100%;height:auto;max-width:780px;background:#f4f7f0;border-radius:12px}.neuraldoc svg text{font-size:12px;fill:#63796f}.neuraldoc .chart{overflow-x:auto}.neuraldoc h4{margin-top:22px}.neuraldoc a{color:#286c5a}</style><div class=\"neuraldoc\"><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 140\" role=\"img\" aria-label=\"方法计算流程\"><title>方法计算流程</title><rect x=\"8\" y=\"38\" width=\"135.25\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"20\" y=\"62\" >01</text><text x=\"20\" y=\"85\" >落物塔 10→12</text><path d=\"M144.25 71h14\" stroke=\"#91ae98\"/><rect x=\"159.25\" y=\"38\" width=\"135.25\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"171.25\" y=\"62\" >02</text><text x=\"171.25\" y=\"85\" >工具塔 8→12</text><path d=\"M295.5 71h14\" stroke=\"#91ae98\"/><rect x=\"310.5\" y=\"38\" width=\"135.25\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"322.5\" y=\"62\" >03</text><text x=\"322.5\" y=\"85\" >交互 36→16</text><path d=\"M446.75 71h14\" stroke=\"#91ae98\"/><rect x=\"461.75\" y=\"38\" width=\"135.25\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"473.75\" y=\"62\" >04</text><text x=\"473.75\" y=\"85\" >完成预测 + 分类</text></svg></div><p>落物塔将 10 维观察特征编码为 12 维，工具塔将 8 维规格编码为 12 维。拼接两塔与逐元素乘积后预测模拟完成标签；落物塔另有三分类输出。可行性由原有约束引擎判定，网络只参与通过候选的比较。</p><p>辅助分类不代替人工确认。规则未知时不输出完成预测，冲突候选直接排除。模型输出未校准为真实成功概率。</p></div>"
+        },
+        {
+          "no": 3,
+          "en": "DATA",
+          "title": "数据与标签条件",
+          "html": "<style>.neuraldoc{font:14px/1.9 \"Segoe UI\",\"Microsoft YaHei\",sans-serif;color:#294439}.neuraldoc svg{display:block;width:100%;height:auto;max-width:780px;background:#f4f7f0;border-radius:12px}.neuraldoc svg text{font-size:12px;fill:#63796f}.neuraldoc .chart{overflow-x:auto}.neuraldoc h4{margin-top:22px}.neuraldoc a{color:#286c5a}</style><div class=\"neuraldoc\"><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 140\" role=\"img\" aria-label=\"方法计算流程\"><title>方法计算流程</title><rect x=\"8\" y=\"38\" width=\"135.25\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"20\" y=\"62\" >01</text><text x=\"20\" y=\"85\" >整组划分</text><path d=\"M144.25 71h14\" stroke=\"#91ae98\"/><rect x=\"159.25\" y=\"38\" width=\"135.25\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"171.25\" y=\"62\" >02</text><text x=\"171.25\" y=\"85\" >训练更新</text><path d=\"M295.5 71h14\" stroke=\"#91ae98\"/><rect x=\"310.5\" y=\"38\" width=\"135.25\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"322.5\" y=\"62\" >03</text><text x=\"322.5\" y=\"85\" >验证选择</text><path d=\"M446.75 71h14\" stroke=\"#91ae98\"/><rect x=\"461.75\" y=\"38\" width=\"135.25\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"473.75\" y=\"62\" >04</text><text x=\"473.75\" y=\"85\" >独立测试</text></svg></div><ul><li>输入：有效通径、落物外/内径、长度、深度、形态及顶部/内孔/磁性/循环状态；规格含工具族与尺寸范围。</li><li>标签：模拟完成 0/1 与落物类别；先筛出满足几何条件的候选，再生成含随机性的完成标签，保留失败记录。</li><li>1600 个井组，按 60% / 20% / 20% 划分训练、验证、测试；同井不同工具不跨集合。</li><li>12 个原教学工具规格加 4 个范围重叠的模拟规格；没有真实厂家性能资料。</li></ul><p>先生成 1600 口井，其中 35 口无可行工具，不生成完成标签；剩余 1565 口井展开为可行的落物—工具记录。网页显示实际记录数。全部为教学模拟，可导出完整 JSON。</p></div>"
+        },
+        {
+          "no": 4,
+          "en": "VALUE",
+          "title": "价值、难度与边界",
+          "html": "<style>.neuraldoc{font:14px/1.9 \"Segoe UI\",\"Microsoft YaHei\",sans-serif;color:#294439}.neuraldoc svg{display:block;width:100%;height:auto;max-width:780px;background:#f4f7f0;border-radius:12px}.neuraldoc svg text{font-size:12px;fill:#63796f}.neuraldoc .chart{overflow-x:auto}.neuraldoc h4{margin-top:22px}.neuraldoc a{color:#286c5a}</style><div class=\"neuraldoc\"><p>难度高：真实数据分布、标签质量与不确定性决定了模型能否迁移。这里训练的是教学小模型，重点是把输入、计算和输出可视化，不能据此推断现场效果。</p><p>比较表支持候选筛选，剖面图解释几何关系，嵌入折线展示实际网络中间量。对空间量、预测得分与规则状态使用不同编码，避免混淆。</p><p>通用方法：双塔神经网络、多任务分类、约束推理、近邻检索。</p><p><a href=\"https://www.tensorflow.org/js\" target=\"_blank\" rel=\"noopener\">TensorFlow.js · 浏览器机器学习</a> · <a href=\"https://glossary.slb.com/en/terms/f/fishing_tool\" target=\"_blank\" rel=\"noopener\">SLB · Fishing tool</a></p></div>"
+        }
+      ]
+    },
+    "workflow": {
+      "label": "案例流程",
+      "title": "从专业场景到可复核的智能分析",
+      "lead": [
+        "落物塔将 10 维观察特征编码为 12 维，工具塔将 8 维规格编码为 12 维。拼接两塔与逐元素乘积后预测模拟完成标签；落物塔另有三分类输出。可行性由原有约束引擎判定，网络只参与通过候选的比较。"
+      ],
+      "stats": [
+        [
+          "模拟井组",
+          "1600"
+        ],
+        [
+          "工具规格",
+          "16"
+        ],
+        [
+          "网络参数",
+          "888"
+        ],
+        [
+          "输出任务",
+          "完成 + 分类"
+        ]
+      ],
+      "steps": [
+        {
+          "name": "确定落物",
+          "role": "可视分析",
+          "do": "先区分管、杆与碎屑，记录形态、外径和内孔；神经网络类别头提供独立建议。",
+          "effect": "人工确认类别",
+          "trap": "形态与尺寸可能不足以确定类别；建议不会自动替换人工选择。"
+        },
+        {
+          "name": "检查几何",
+          "role": "可视分析",
+          "do": "以最不利尺寸检查通行和接合范围，状态未知则保留待核实。",
+          "effect": "通过 / 排除 / 待核实",
+          "trap": "教学余量为自定，不是通用工程标准。"
+        },
+        {
+          "name": "构造样本",
+          "role": "可视分析",
+          "do": "一口井的所有候选始终位于同一集合；标签包含通过约束后仍未完成的情况。",
+          "effect": "训练 / 验证 / 测试",
+          "trap": "将候选随机打散会造成同井泄漏。"
+        },
+        {
+          "name": "训练双塔",
+          "role": "可视分析",
+          "do": "两塔分别学习表示，交互层结合它们；损失反向传播更新真实权重。",
+          "effect": "匹配输出与分类头",
+          "trap": "更复杂的网络也可能欠拟合或过拟合。"
+        },
+        {
+          "name": "比较候选",
+          "role": "可视分析",
+          "do": "按网络输出比较可行工具，同时保留原规则分、近邻完成记录及中间表示。",
+          "effect": "网络输出 / 近邻参考",
+          "trap": "预测未经现场校准；历史接近并不能证明因果效果。"
+        },
+        {
+          "name": "复核与保存",
+          "role": "可视分析",
+          "do": "检查规则、辅助分类和资料支持，导出输入、输出、完整模型及数据版本。",
+          "effect": "可复算分析快照",
+          "trap": "未覆盖强度、温压、井控、井斜和载荷。"
+        }
+      ],
+      "metrics": {
+        "title": "每一步的输入与输出",
+        "html": "<style>.neuraldoc{font:14px/1.9 \"Segoe UI\",\"Microsoft YaHei\",sans-serif;color:#294439}.neuraldoc svg{display:block;width:100%;height:auto;max-width:780px;background:#f4f7f0;border-radius:12px}.neuraldoc svg text{font-size:12px;fill:#63796f}.neuraldoc .chart{overflow-x:auto}.neuraldoc h4{margin-top:22px}.neuraldoc a{color:#286c5a}</style><div class=\"neuraldoc\"><h4>01 确定落物</h4><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 140\" role=\"img\" aria-label=\"方法计算流程\"><title>方法计算流程</title><rect x=\"8\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"20\" y=\"62\" >01</text><text x=\"20\" y=\"85\" >观察特征</text><path d=\"M194.66666666666666 71h14\" stroke=\"#91ae98\"/><rect x=\"209.66666666666666\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"221.66666666666666\" y=\"62\" >02</text><text x=\"221.66666666666666\" y=\"85\" >确定落物</text><path d=\"M396.3333333333333 71h14\" stroke=\"#91ae98\"/><rect x=\"411.3333333333333\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"423.3333333333333\" y=\"62\" >03</text><text x=\"423.3333333333333\" y=\"85\" >人工确认类别</text></svg></div><p>先区分管、杆与碎屑，记录形态、外径和内孔；神经网络类别头提供独立建议。</p><p>复核：形态与尺寸可能不足以确定类别；建议不会自动替换人工选择。</p><p>演示位置：分类得分表与形态选择器</p><h4>02 检查几何</h4><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 140\" role=\"img\" aria-label=\"方法计算流程\"><title>方法计算流程</title><rect x=\"8\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"20\" y=\"62\" >01</text><text x=\"20\" y=\"85\" >井筒 / 工具尺寸</text><path d=\"M194.66666666666666 71h14\" stroke=\"#91ae98\"/><rect x=\"209.66666666666666\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"221.66666666666666\" y=\"62\" >02</text><text x=\"221.66666666666666\" y=\"85\" >检查几何</text><path d=\"M396.3333333333333 71h14\" stroke=\"#91ae98\"/><rect x=\"411.3333333333333\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"423.3333333333333\" y=\"62\" >03</text><text x=\"423.3333333333333\" y=\"85\" >通过 / 排除 / 待核实</text></svg></div><p>以最不利尺寸检查通行和接合范围，状态未知则保留待核实。</p><p>复核：教学余量为自定，不是通用工程标准。</p><p>演示位置：剖面图与逐项规则表</p><h4>03 构造样本</h4><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 140\" role=\"img\" aria-label=\"方法计算流程\"><title>方法计算流程</title><rect x=\"8\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"20\" y=\"62\" >01</text><text x=\"20\" y=\"85\" >按井分组的记录</text><path d=\"M194.66666666666666 71h14\" stroke=\"#91ae98\"/><rect x=\"209.66666666666666\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"221.66666666666666\" y=\"62\" >02</text><text x=\"221.66666666666666\" y=\"85\" >构造样本</text><path d=\"M396.3333333333333 71h14\" stroke=\"#91ae98\"/><rect x=\"411.3333333333333\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"423.3333333333333\" y=\"62\" >03</text><text x=\"423.3333333333333\" y=\"85\" >训练 / 验证 / 测试</text></svg></div><p>一口井的所有候选始终位于同一集合；标签包含通过约束后仍未完成的情况。</p><p>复核：将候选随机打散会造成同井泄漏。</p><p>演示位置：数据档案与集合筛选</p><h4>04 训练双塔</h4><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 140\" role=\"img\" aria-label=\"方法计算流程\"><title>方法计算流程</title><rect x=\"8\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"20\" y=\"62\" >01</text><text x=\"20\" y=\"85\" >两组特征</text><path d=\"M194.66666666666666 71h14\" stroke=\"#91ae98\"/><rect x=\"209.66666666666666\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"221.66666666666666\" y=\"62\" >02</text><text x=\"221.66666666666666\" y=\"85\" >训练双塔</text><path d=\"M396.3333333333333 71h14\" stroke=\"#91ae98\"/><rect x=\"411.3333333333333\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"423.3333333333333\" y=\"62\" >03</text><text x=\"423.3333333333333\" y=\"85\" >匹配输出与分类头</text></svg></div><p>两塔分别学习表示，交互层结合它们；损失反向传播更新真实权重。</p><p>复核：更复杂的网络也可能欠拟合或过拟合。</p><p>演示位置：真实训练与验证损失曲线</p><h4>05 比较候选</h4><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 140\" role=\"img\" aria-label=\"方法计算流程\"><title>方法计算流程</title><rect x=\"8\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"20\" y=\"62\" >01</text><text x=\"20\" y=\"85\" >通过约束的工具</text><path d=\"M194.66666666666666 71h14\" stroke=\"#91ae98\"/><rect x=\"209.66666666666666\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"221.66666666666666\" y=\"62\" >02</text><text x=\"221.66666666666666\" y=\"85\" >比较候选</text><path d=\"M396.3333333333333 71h14\" stroke=\"#91ae98\"/><rect x=\"411.3333333333333\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"423.3333333333333\" y=\"62\" >03</text><text x=\"423.3333333333333\" y=\"85\" >网络输出 / 近邻参考</text></svg></div><p>按网络输出比较可行工具，同时保留原规则分、近邻完成记录及中间表示。</p><p>复核：预测未经现场校准；历史接近并不能证明因果效果。</p><p>演示位置：工具选择、嵌入与历史表</p><h4>06 复核与保存</h4><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 140\" role=\"img\" aria-label=\"方法计算流程\"><title>方法计算流程</title><rect x=\"8\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"20\" y=\"62\" >01</text><text x=\"20\" y=\"85\" >推荐与约束证据</text><path d=\"M194.66666666666666 71h14\" stroke=\"#91ae98\"/><rect x=\"209.66666666666666\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"221.66666666666666\" y=\"62\" >02</text><text x=\"221.66666666666666\" y=\"85\" >复核与保存</text><path d=\"M396.3333333333333 71h14\" stroke=\"#91ae98\"/><rect x=\"411.3333333333333\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"423.3333333333333\" y=\"62\" >03</text><text x=\"423.3333333333333\" y=\"85\" >可复算分析快照</text></svg></div><p>检查规则、辅助分类和资料支持，导出输入、输出、完整模型及数据版本。</p><p>复核：未覆盖强度、温压、井控、井斜和载荷。</p><p>演示位置：导出快照 / 完整数据</p></div>"
+      },
+      "fails": [
+        {
+          "name": "确定落物",
+          "why": "形态与尺寸可能不足以确定类别；建议不会自动替换人工选择。"
+        },
+        {
+          "name": "检查几何",
+          "why": "教学余量为自定，不是通用工程标准。"
+        },
+        {
+          "name": "构造样本",
+          "why": "将候选随机打散会造成同井泄漏。"
+        },
+        {
+          "name": "训练双塔",
+          "why": "更复杂的网络也可能欠拟合或过拟合。"
+        },
+        {
+          "name": "比较候选",
+          "why": "预测未经现场校准；历史接近并不能证明因果效果。"
+        },
+        {
+          "name": "复核与保存",
+          "why": "未覆盖强度、温压、井控、井斜和载荷。"
+        }
+      ]
+    },
+    "demo": {
+      "label": "案例演示",
+      "mode": "page",
+      "html": "demo/experiment.html",
+      "intro": "用几何规则划定可行范围，再让双塔网络学习落物与工具之间的关系。每个候选都有条件、有证据、有可复核的计算过程。",
+      "height": 1150
+    }
+  }
+}

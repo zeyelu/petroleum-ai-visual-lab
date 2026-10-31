@@ -1,0 +1,171 @@
+{
+  "id": "workover-quantile-lab",
+  "sceneId": "wo5",
+  "title": "修井周期预测",
+  "version": "3.0.0",
+  "updated": "2026-10-29",
+  "status": "ready",
+  "methods": [
+    "ts"
+  ],
+  "tabs": {
+    "background": {
+      "label": "专业背景",
+      "lede": "用多任务网络解释六道工序，用有序分位数呈现总工期的不确定性。结合独立校准、历史支持检查和资源占用假设，形成可以复算的计划参考。",
+      "judge": [
+        {
+          "label": "方法",
+          "value": "QUANTILE NEURAL NETWORK",
+          "desc": "多任务回归 / 分位数神经网络 / Pinball loss / 共形区间"
+        },
+        {
+          "label": "数据",
+          "value": "2000",
+          "desc": "2000 条教学模拟完整作业，输入、原始混合单位、归一化小时和集合划分均可导出。"
+        },
+        {
+          "label": "价值",
+          "value": "可视复核",
+          "desc": "工序条形图回答时间花在哪里，甘特图解释串行累计，区间图呈现不确定性，散点图检验偏差。点估计、覆盖、可用性和资源假设分别呈现，避免用一个精确数字掩盖条件。"
+        },
+        {
+          "label": "难度",
+          "value": "高",
+          "desc": "难度高：真实数据分布、标签质量与不确定性决定了模型能否迁移。这里训练的是教学小模型，重点是把输入、计算和输出可视化，不能据此推断现场效果。"
+        }
+      ],
+      "sections": [
+        {
+          "no": 1,
+          "en": "CONTEXT",
+          "title": "专业概念与当前问题",
+          "html": "<style>.neuraldoc{font:14px/1.9 \"Segoe UI\",\"Microsoft YaHei\",sans-serif;color:#294439}.neuraldoc svg{display:block;width:100%;height:auto;max-width:780px;background:#f4f7f0;border-radius:12px}.neuraldoc svg text{font-size:12px;fill:#63796f}.neuraldoc .chart{overflow-x:auto}.neuraldoc h4{margin-top:22px}.neuraldoc a{color:#286c5a}</style><div class=\"neuraldoc\"><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 600 275\" role=\"img\" aria-label=\"各工序预测小时\"><title>各工序预测小时</title><text x=\"5\" y=\"30\" >准备</text><rect x=\"83\" y=\"15\" width=\"54.94505494505494\" height=\"12\" rx=\"3\" fill=\"#286c5a\"/><text x=\"144.94505494505495\" y=\"26\" >6.0 h</text><text x=\"5\" y=\"66\" >工具入井</text><rect x=\"83\" y=\"51\" width=\"82.41758241758241\" height=\"12\" rx=\"3\" fill=\"#286c5a\"/><text x=\"172.41758241758242\" y=\"62\" >9.0 h</text><text x=\"5\" y=\"102\" >等待</text><rect x=\"83\" y=\"87\" width=\"45.78754578754578\" height=\"12\" rx=\"3\" fill=\"#286c5a\"/><text x=\"135.78754578754578\" y=\"98\" >5.0 h</text><text x=\"5\" y=\"138\" >核心处理</text><rect x=\"83\" y=\"123\" width=\"357.14285714285705\" height=\"12\" rx=\"3\" fill=\"#286c5a\"/><text x=\"447.14285714285705\" y=\"134\" >39.0 h</text><text x=\"5\" y=\"174\" >验证</text><rect x=\"83\" y=\"159\" width=\"45.78754578754578\" height=\"12\" rx=\"3\" fill=\"#286c5a\"/><text x=\"135.78754578754578\" y=\"170\" >5.0 h</text><text x=\"5\" y=\"210\" >退场</text><rect x=\"83\" y=\"195\" width=\"36.63003663003662\" height=\"12\" rx=\"3\" fill=\"#286c5a\"/><text x=\"126.63003663003661\" y=\"206\" >4.0 h</text><text x=\"83\" y=\"251\" >绿色：神经网络；细蓝条：近邻参考</text></svg></div><p>一次修井不是一个不可拆解的“总小时数”：准备、工具入井、等待、核心处理、验证和退场消耗不同资源。等待会拉长日历工期，但是否占用班组和修井机，需要单独约定。</p><p>历史修井记录常混用小时、天与班次，等待也不一定占用全部资源。只给一个总数难以解释时间消耗所在；只看平均数又会隐藏长尾等待的不确定性。</p></div>"
+        },
+        {
+          "no": 2,
+          "en": "INTELLIGENCE",
+          "title": "AI 的具体介入点",
+          "html": "<style>.neuraldoc{font:14px/1.9 \"Segoe UI\",\"Microsoft YaHei\",sans-serif;color:#294439}.neuraldoc svg{display:block;width:100%;height:auto;max-width:780px;background:#f4f7f0;border-radius:12px}.neuraldoc svg text{font-size:12px;fill:#63796f}.neuraldoc .chart{overflow-x:auto}.neuraldoc h4{margin-top:22px}.neuraldoc a{color:#286c5a}</style><div class=\"neuraldoc\"><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 140\" role=\"img\" aria-label=\"方法计算流程\"><title>方法计算流程</title><rect x=\"8\" y=\"38\" width=\"135.25\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"20\" y=\"62\" >01</text><text x=\"20\" y=\"85\" >单位统一 / 特征</text><path d=\"M144.25 71h14\" stroke=\"#91ae98\"/><rect x=\"159.25\" y=\"38\" width=\"135.25\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"171.25\" y=\"62\" >02</text><text x=\"171.25\" y=\"85\" >共享神经网络</text><path d=\"M295.5 71h14\" stroke=\"#91ae98\"/><rect x=\"310.5\" y=\"38\" width=\"135.25\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"322.5\" y=\"62\" >03</text><text x=\"322.5\" y=\"85\" >6 工序 + 5 分位</text><path d=\"M446.75 71h14\" stroke=\"#91ae98\"/><rect x=\"461.75\" y=\"38\" width=\"135.25\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"473.75\" y=\"62\" >04</text><text x=\"473.75\" y=\"85\" >校准 / 资源换算</text></svg></div><p>用 8 维输入，经 24→16 的共享 ReLU 网络，6 个正值工序头预测小时，5 个有序分位头直接预测总工期 Q5/Q10/Q50/Q90/Q95。独立校准集扩张预测区间；再按人数和占用规则把工序点估计换算为人时、机时。</p><p>这是结构化回归，不包装成时序 LSTM。六工序点预测可以相加，六工序分位数不能相加充当总分位。资源是固定配置换算，不是最优排班或人员数量推荐。</p></div>"
+        },
+        {
+          "no": 3,
+          "en": "DATA",
+          "title": "数据与标签条件",
+          "html": "<style>.neuraldoc{font:14px/1.9 \"Segoe UI\",\"Microsoft YaHei\",sans-serif;color:#294439}.neuraldoc svg{display:block;width:100%;height:auto;max-width:780px;background:#f4f7f0;border-radius:12px}.neuraldoc svg text{font-size:12px;fill:#63796f}.neuraldoc .chart{overflow-x:auto}.neuraldoc h4{margin-top:22px}.neuraldoc a{color:#286c5a}</style><div class=\"neuraldoc\"><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 140\" role=\"img\" aria-label=\"方法计算流程\"><title>方法计算流程</title><rect x=\"8\" y=\"38\" width=\"135.25\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"20\" y=\"62\" >01</text><text x=\"20\" y=\"85\" >整组划分</text><path d=\"M144.25 71h14\" stroke=\"#91ae98\"/><rect x=\"159.25\" y=\"38\" width=\"135.25\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"171.25\" y=\"62\" >02</text><text x=\"171.25\" y=\"85\" >训练更新</text><path d=\"M295.5 71h14\" stroke=\"#91ae98\"/><rect x=\"310.5\" y=\"38\" width=\"135.25\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"322.5\" y=\"62\" >03</text><text x=\"322.5\" y=\"85\" >验证选择</text><path d=\"M446.75 71h14\" stroke=\"#91ae98\"/><rect x=\"461.75\" y=\"38\" width=\"135.25\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"473.75\" y=\"62\" >04</text><text x=\"473.75\" y=\"85\" >独立测试</text></svg></div><ul><li>输入：作业类型、井深、复杂度、班组能力、设备就绪、偏远运输条件；类型独热加 5 维训练集标准化数值。</li><li>标签：准备、工具入井、等待、核心处理、验证、退场六工序小时以及总小时；原始记录保留 h/d/shift 与班次长度。</li><li>固定种子打乱后 1200 训练 /300 验证 /250 校准 /250 测试，整条作业记录不拆散。</li><li>标签需完整、已结束、单位明确；网页质量检查示例展示未知班长、缺失和未结束如何被拒绝。</li></ul><p>2000 条教学模拟完整作业，输入、原始混合单位、归一化小时和集合划分均可导出。</p></div>"
+        },
+        {
+          "no": 4,
+          "en": "VALUE",
+          "title": "价值、难度与边界",
+          "html": "<style>.neuraldoc{font:14px/1.9 \"Segoe UI\",\"Microsoft YaHei\",sans-serif;color:#294439}.neuraldoc svg{display:block;width:100%;height:auto;max-width:780px;background:#f4f7f0;border-radius:12px}.neuraldoc svg text{font-size:12px;fill:#63796f}.neuraldoc .chart{overflow-x:auto}.neuraldoc h4{margin-top:22px}.neuraldoc a{color:#286c5a}</style><div class=\"neuraldoc\"><p>难度高：真实数据分布、标签质量与不确定性决定了模型能否迁移。这里训练的是教学小模型，重点是把输入、计算和输出可视化，不能据此推断现场效果。</p><p>工序条形图回答时间花在哪里，甘特图解释串行累计，区间图呈现不确定性，散点图检验偏差。点估计、覆盖、可用性和资源假设分别呈现，避免用一个精确数字掩盖条件。</p><p>通用方法：多任务回归、分位数神经网络、Pinball loss、共形区间。</p><p><a href=\"https://www.tensorflow.org/js\" target=\"_blank\" rel=\"noopener\">TensorFlow.js · 浏览器机器学习</a> · <a href=\"https://arxiv.org/abs/1905.03222\" target=\"_blank\" rel=\"noopener\">Romano 等 · Conformalized Quantile Regression</a></p></div>"
+        }
+      ]
+    },
+    "workflow": {
+      "label": "案例流程",
+      "title": "从专业场景到可复核的智能分析",
+      "lead": [
+        "用 8 维输入，经 24→16 的共享 ReLU 网络，6 个正值工序头预测小时，5 个有序分位头直接预测总工期 Q5/Q10/Q50/Q90/Q95。独立校准集扩张预测区间；再按人数和占用规则把工序点估计换算为人时、机时。"
+      ],
+      "stats": [
+        [
+          "模拟记录",
+          "2000"
+        ],
+        [
+          "训练 / 验证",
+          "1200 / 300"
+        ],
+        [
+          "校准 / 测试",
+          "250 / 250"
+        ],
+        [
+          "网络参数",
+          "803"
+        ]
+      ],
+      "steps": [
+        {
+          "name": "清洗记录",
+          "role": "可视分析",
+          "do": "小时、天和明确长度的班次统一，拒绝缺失、未完工及工序不全的标签。",
+          "effect": "完整小时标签",
+          "trap": "不知道班次长度不能默认按 8 小时换算。"
+        },
+        {
+          "name": "准备特征",
+          "role": "可视分析",
+          "do": "作业类型独热，其他五维使用训练统计标准化；四个集合各自承担不同作用。",
+          "effect": "8 维编码与分组",
+          "trap": "不能用测试记录选择模型或校准区间。"
+        },
+        {
+          "name": "联合学习",
+          "role": "可视分析",
+          "do": "共享表示兼顾工序点预测和总工期分位，softplus 保证正值与分位有序。",
+          "effect": "六工序 + 五分位",
+          "trap": "分位数不是均值，点预测总和与中位数头可以不同。"
+        },
+        {
+          "name": "校准区间",
+          "role": "可视分析",
+          "do": "取有限样本分位修正，扩张上下界；附近样本不足时暂停输出校准区间。",
+          "effect": "80% /90% 区间",
+          "trap": "同分布边际覆盖不保证每个单井或筛选子群都达到目标。"
+        },
+        {
+          "name": "计算资源",
+          "role": "可视分析",
+          "do": "按串行工序绘制排程，人数乘占用小时得到人时，准备不计机具占用。",
+          "effect": "日历 / 人时 / 机时",
+          "trap": "不含并行排程、班次冲突和真实资源优化。"
+        },
+        {
+          "name": "比较复核",
+          "role": "可视分析",
+          "do": "保留近邻参照，独立测试绘制实际—预测散点与区间覆盖，导出模型。",
+          "effect": "误差 / 覆盖 / 可用性",
+          "trap": "网络更复杂不保证 MAE 更小，条件对照不是因果干预结论。"
+        }
+      ],
+      "metrics": {
+        "title": "每一步的输入与输出",
+        "html": "<style>.neuraldoc{font:14px/1.9 \"Segoe UI\",\"Microsoft YaHei\",sans-serif;color:#294439}.neuraldoc svg{display:block;width:100%;height:auto;max-width:780px;background:#f4f7f0;border-radius:12px}.neuraldoc svg text{font-size:12px;fill:#63796f}.neuraldoc .chart{overflow-x:auto}.neuraldoc h4{margin-top:22px}.neuraldoc a{color:#286c5a}</style><div class=\"neuraldoc\"><h4>01 清洗记录</h4><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 140\" role=\"img\" aria-label=\"方法计算流程\"><title>方法计算流程</title><rect x=\"8\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"20\" y=\"62\" >01</text><text x=\"20\" y=\"85\" >混合时长单位</text><path d=\"M194.66666666666666 71h14\" stroke=\"#91ae98\"/><rect x=\"209.66666666666666\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"221.66666666666666\" y=\"62\" >02</text><text x=\"221.66666666666666\" y=\"85\" >清洗记录</text><path d=\"M396.3333333333333 71h14\" stroke=\"#91ae98\"/><rect x=\"411.3333333333333\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"423.3333333333333\" y=\"62\" >03</text><text x=\"423.3333333333333\" y=\"85\" >完整小时标签</text></svg></div><p>小时、天和明确长度的班次统一，拒绝缺失、未完工及工序不全的标签。</p><p>复核：不知道班次长度不能默认按 8 小时换算。</p><p>演示位置：单位质量检查表</p><h4>02 准备特征</h4><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 140\" role=\"img\" aria-label=\"方法计算流程\"><title>方法计算流程</title><rect x=\"8\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"20\" y=\"62\" >01</text><text x=\"20\" y=\"85\" >作业描述</text><path d=\"M194.66666666666666 71h14\" stroke=\"#91ae98\"/><rect x=\"209.66666666666666\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"221.66666666666666\" y=\"62\" >02</text><text x=\"221.66666666666666\" y=\"85\" >准备特征</text><path d=\"M396.3333333333333 71h14\" stroke=\"#91ae98\"/><rect x=\"411.3333333333333\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"423.3333333333333\" y=\"62\" >03</text><text x=\"423.3333333333333\" y=\"85\" >8 维编码与分组</text></svg></div><p>作业类型独热，其他五维使用训练统计标准化；四个集合各自承担不同作用。</p><p>复核：不能用测试记录选择模型或校准区间。</p><p>演示位置：数据档案与集合筛选</p><h4>03 联合学习</h4><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 140\" role=\"img\" aria-label=\"方法计算流程\"><title>方法计算流程</title><rect x=\"8\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"20\" y=\"62\" >01</text><text x=\"20\" y=\"85\" >输入与工期标签</text><path d=\"M194.66666666666666 71h14\" stroke=\"#91ae98\"/><rect x=\"209.66666666666666\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"221.66666666666666\" y=\"62\" >02</text><text x=\"221.66666666666666\" y=\"85\" >联合学习</text><path d=\"M396.3333333333333 71h14\" stroke=\"#91ae98\"/><rect x=\"411.3333333333333\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"423.3333333333333\" y=\"62\" >03</text><text x=\"423.3333333333333\" y=\"85\" >六工序 + 五分位</text></svg></div><p>共享表示兼顾工序点预测和总工期分位，softplus 保证正值与分位有序。</p><p>复核：分位数不是均值，点预测总和与中位数头可以不同。</p><p>演示位置：工序条形图与训练曲线</p><h4>04 校准区间</h4><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 140\" role=\"img\" aria-label=\"方法计算流程\"><title>方法计算流程</title><rect x=\"8\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"20\" y=\"62\" >01</text><text x=\"20\" y=\"85\" >250 条校准记录</text><path d=\"M194.66666666666666 71h14\" stroke=\"#91ae98\"/><rect x=\"209.66666666666666\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"221.66666666666666\" y=\"62\" >02</text><text x=\"221.66666666666666\" y=\"85\" >校准区间</text><path d=\"M396.3333333333333 71h14\" stroke=\"#91ae98\"/><rect x=\"411.3333333333333\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"423.3333333333333\" y=\"62\" >03</text><text x=\"423.3333333333333\" y=\"85\" >80% /90% 区间</text></svg></div><p>取有限样本分位修正，扩张上下界；附近样本不足时暂停输出校准区间。</p><p>复核：同分布边际覆盖不保证每个单井或筛选子群都达到目标。</p><p>演示位置：原始与校准区间、支持提示</p><h4>05 计算资源</h4><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 140\" role=\"img\" aria-label=\"方法计算流程\"><title>方法计算流程</title><rect x=\"8\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"20\" y=\"62\" >01</text><text x=\"20\" y=\"85\" >工序小时与占用假设</text><path d=\"M194.66666666666666 71h14\" stroke=\"#91ae98\"/><rect x=\"209.66666666666666\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"221.66666666666666\" y=\"62\" >02</text><text x=\"221.66666666666666\" y=\"85\" >计算资源</text><path d=\"M396.3333333333333 71h14\" stroke=\"#91ae98\"/><rect x=\"411.3333333333333\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"423.3333333333333\" y=\"62\" >03</text><text x=\"423.3333333333333\" y=\"85\" >日历 / 人时 / 机时</text></svg></div><p>按串行工序绘制排程，人数乘占用小时得到人时，准备不计机具占用。</p><p>复核：不含并行排程、班次冲突和真实资源优化。</p><p>演示位置：甘特图、等待占用与人数开关</p><h4>06 比较复核</h4><div class=\"chart\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 140\" role=\"img\" aria-label=\"方法计算流程\"><title>方法计算流程</title><rect x=\"8\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"20\" y=\"62\" >01</text><text x=\"20\" y=\"85\" >测试记录与参考</text><path d=\"M194.66666666666666 71h14\" stroke=\"#91ae98\"/><rect x=\"209.66666666666666\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e6edf0\"/><text x=\"221.66666666666666\" y=\"62\" >02</text><text x=\"221.66666666666666\" y=\"85\" >比较复核</text><path d=\"M396.3333333333333 71h14\" stroke=\"#91ae98\"/><rect x=\"411.3333333333333\" y=\"38\" width=\"185.66666666666666\" height=\"66\" rx=\"9\" fill=\"#e7f0e1\"/><text x=\"423.3333333333333\" y=\"62\" >03</text><text x=\"423.3333333333333\" y=\"85\" >误差 / 覆盖 / 可用性</text></svg></div><p>保留近邻参照，独立测试绘制实际—预测散点与区间覆盖，导出模型。</p><p>复核：网络更复杂不保证 MAE 更小，条件对照不是因果干预结论。</p><p>演示位置：测试散点、区间与导出</p></div>"
+      },
+      "fails": [
+        {
+          "name": "清洗记录",
+          "why": "不知道班次长度不能默认按 8 小时换算。"
+        },
+        {
+          "name": "准备特征",
+          "why": "不能用测试记录选择模型或校准区间。"
+        },
+        {
+          "name": "联合学习",
+          "why": "分位数不是均值，点预测总和与中位数头可以不同。"
+        },
+        {
+          "name": "校准区间",
+          "why": "同分布边际覆盖不保证每个单井或筛选子群都达到目标。"
+        },
+        {
+          "name": "计算资源",
+          "why": "不含并行排程、班次冲突和真实资源优化。"
+        },
+        {
+          "name": "比较复核",
+          "why": "网络更复杂不保证 MAE 更小，条件对照不是因果干预结论。"
+        }
+      ]
+    },
+    "demo": {
+      "label": "案例演示",
+      "mode": "page",
+      "html": "demo/experiment.html",
+      "intro": "用多任务网络解释六道工序，用有序分位数呈现总工期的不确定性。结合独立校准、历史支持检查和资源占用假设，形成可以复算的计划参考。",
+      "height": 1150
+    }
+  }
+}

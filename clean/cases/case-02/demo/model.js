@@ -1,0 +1,23 @@
+(function(g){'use strict';const C=typeof module==='object'?require('./core.js'):g.NeuralCore,B=typeof module==='object'?require('./baseline.js'):g.Fishing,tf=C.tf();
+const tools=[...B.tools,...[['O-100R','overshot',100,64,86,35],['S-72R','spear',72,45,65,35],['M-88R','magnet',88,10,45,0],['B-100R','basket',100,10,48,0]].map(([id,family,body,min,max,reach])=>({id,family,body,min,max,reach,...B.families[family]}))];
+const defaults={...B.defaults,bore:160,outer:70,inner:50,exposure:90,shape:'elongated'};
+const qvec=q=>[q.bore/220,q.outer/130,q.inner/110,q.exposure/160,q.depth/4500,+(q.shape==='irregular'),+(q.top==='clean'),+(q.open==='yes'),+(q.magnetic==='yes'),+(q.circulation==='yes')];
+const tvec=t=>[t.body/150,t.min/110,t.max/130,t.reach/60,...['overshot','spear','magnet','basket'].map(k=>+(k===t.family))];
+function dataset(){const r=C.rng(231102),split=C.groups(1600,231102),rows=[];for(let i=0;i<1600;i++){const kind=['pipe','rod','fragment'][i%3],outer=kind==='fragment'?10+r()*30:61+r()*40,inner=kind==='pipe'?outer-18-r()*10:0;const q={...defaults,kind,shape:kind==='fragment'?'irregular':'elongated',bore:145+r()*65,outer,inner,exposure:45+r()*100,depth:1200+r()*2800,top:'clean',open:'yes',tolerance:1};const common=r()*.3-.15;
+ for(const t of tools){const e=B.evaluate(q,t);if(e.status!=='pass')continue;const room=Math.min(e.rangeMargin,15)/15,passage=Math.min(e.clearanceMargin,35)/35,deep=q.depth/4500;
+ const logit=.6+1.8*room+.7*passage-.9*deep+common+(t.family==='spear'?.25:0)-(t.family==='magnet'&&q.outer>30?.5:0);rows.push({id:`F${i+1}-${t.id}`,well:`F${i+1}`,split:split[i],q,tool:t.id,completed:+(r()<C.sigmoid(logit)),kind:['pipe','rod','fragment'].indexOf(kind)});}}
+ return rows;}
+const rows=dataset();
+function create(){const q=tf.input({shape:[10]}),t=tf.input({shape:[8]}),dense=(units,activation,seed)=>tf.layers.dense({units,activation,kernelInitializer:tf.initializers.glorotUniform({seed})});
+ const qe=dense(12,'relu',2302).apply(q),te=dense(12,'relu',2303).apply(t),interaction=tf.layers.concatenate().apply([qe,te,tf.layers.multiply().apply([qe,te])]),h=dense(16,'relu',2304).apply(interaction),p=dense(1,'sigmoid',2305).apply(h),kind=dense(3,'softmax',2306).apply(qe);return tf.model({inputs:[q,t],outputs:[p,kind]});}
+function tensors(data){return [tf.tensor2d(data.map(r=>qvec(r.q))),tf.tensor2d(data.map(r=>tvec(tools.find(t=>t.id===r.tool)))),tf.tensor2d(data.map(r=>[r.completed])),tf.tensor2d(data.map(r=>[0,1,2].map(k=>+(k===r.kind))))];}
+async function train(options={}){const m=create(),tr=tensors(rows.filter(r=>r.split==='train')),va=tensors(rows.filter(r=>r.split==='validation'));const info=await C.train(tf,m,tr.slice(0,2),tr.slice(2),va.slice(0,2),va.slice(2),{epochs:35,...options,loss:['binaryCrossentropy',(y,p)=>tf.metrics.categoricalCrossentropy(y,p).mul(.2)]});return {model:m,info};}
+function infer(m,q,t){return tf.tidy(()=>{const out=m.predict([tf.tensor2d([qvec(q)]),tf.tensor2d([tvec(t)])]);return {p:out[0].dataSync()[0],kind:Array.from(out[1].dataSync())};});}
+const valid=q=>[...B.validate(q),...(!['elongated','irregular'].includes(q.shape)?['观察形态无效']:[])];
+function analyze(m,q){const errors=valid(q);if(errors.length)return {errors,items:[]};const items=tools.map(t=>{const e=B.evaluate(q,t);return {...e,...(e.status==='pass'?infer(m,q,t):{})};});return {errors,items};}
+function near(q,id,k=12){return rows.filter(r=>r.split==='train'&&r.tool===id&&r.q.kind===q.kind).map(r=>({...r,distance:Math.sqrt(C.mean(qvec(q).slice(0,5).map((v,j)=>(v-qvec(r.q)[j])**2)))})).sort((a,b)=>a.distance-b.distance).slice(0,k);}
+function reference(q,id){const ns=near(q,id),w=ns.map(r=>1/(.05+r.distance)**2),sum=w.reduce((a,b)=>a+b,0);return ns.length?ns.reduce((s,r,i)=>s+r.completed*w[i],0)/sum:.5;}
+function evaluate(m){const test=rows.filter(r=>r.split==='test'),ps=[],ks=[],ys=test.map(r=>r.completed),rp=[];for(const r of test){const o=infer(m,r.q,tools.find(t=>t.id===r.tool));ps.push(o.p);ks.push(o.kind.indexOf(Math.max(...o.kind))===r.kind?1:0);rp.push(reference(r.q,r.tool));}return {n:test.length,neural:C.binary(ys,ps),baseline:C.binary(ys,rp),kindAccuracy:C.mean(ks),records:test.slice(0,100).map((r,i)=>({id:r.id,actual:r.completed,predicted:ps[i]}))};}
+function embedding(m,q,t){return tf.tidy(()=>[m.layers[2].apply(tf.tensor2d([qvec(q)])),m.layers[3].apply(tf.tensor2d([tvec(t)]))].map(v=>Array.from(v.dataSync())));}
+const api={tf,C,B,tools,defaults,rows,qvec,tvec,valid,create,train,infer,analyze,near,reference,evaluate,embedding};if(typeof module==='object')module.exports=api;else g.CaseModel=api;
+})(globalThis);
