@@ -527,9 +527,11 @@
       '<span class="tag"><span class="dot" style="color:var(--ink-4)"></span>' + esc(sc.id.toUpperCase()) + '</span>' +
       '</div></div>';
 
+    var innerNavigation = c && ['geo-public-fault-20261030','geo-public-facies-20261030','geo-public-inverse-20261030','geo-public-denoise-20261030'].indexOf(c.id) !== -1;
     var body = c
       ? caseSwitch + '<div class="tabs" id="tabs">' + tabBtns + '</div>' + panels
       : pendingHTML(sc);
+    if (innerNavigation) body = caseSwitch + '<div class="panel on" data-panel="demo">' + renderDemoShell(sc, c) + '</div>';
 
     return '<main class="wrap">' +
       crumb([['#/', '总览'], ['#/chain', '作业链'], ['#/stage/' + st.id, st.name], ['#/scene/' + sc.id, sc.name]]) +
@@ -624,6 +626,7 @@
 
   /* ---- tab 交互与示范挂载 ---- */
   function bindTabs(sc, c) {
+    if (c && ['geo-public-fault-20261030','geo-public-facies-20261030','geo-public-inverse-20261030','geo-public-denoise-20261030'].indexOf(c.id) !== -1) { mountDemo(sc, c); return; }
     var tabsEl = document.getElementById('tabs');
     if (!tabsEl) return;
 
