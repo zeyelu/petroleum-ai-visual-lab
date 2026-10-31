@@ -39,7 +39,7 @@
         load(def).then(function (payload) {
           if (active !== generation || !root.isConnected) return;
           root.innerHTML = '';
-          if (['geo-public-fault-20261030','geo-public-facies-20261030','geo-public-inverse-20261030','geo-public-denoise-20261030'].indexOf(def.id) !== -1) {
+          if (["workover-neural-lab","fishing-neural-lab","casing-unet-lab","workover-tcn-lab","workover-quantile-lab","geo-public-fault-20261030","geo-public-facies-20261030","geo-public-inverse-20261030","geo-public-denoise-20261030"].indexOf(def.id) !== -1) {
             payload = Object.assign({}, payload, {demo: Object.assign({}, payload.demo, {html: 'demo/index.html'})});
           }
           handle = global.CaseDemoHost.create(root, payload, context);
